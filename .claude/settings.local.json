@@ -22,7 +22,8 @@
       "Bash(taskkill:*)",
       "Bash(curl:*)",
       "Bash(file:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(pnpm build:*)"
     ]
   }
 }
