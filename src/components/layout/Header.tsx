@@ -20,8 +20,8 @@ export function Header() {
         className={`
           fixed top-0 left-0 right-0 z-50 transition-all duration-[var(--duration-slow)]
           ${isScrolled
-            ? 'bg-white/95 backdrop-blur-sm shadow-sm py-2'
-            : 'py-3'
+            ? 'bg-white/95 backdrop-blur-sm shadow-sm py-0'
+            : 'py-0'
           }
         `}
       >
@@ -31,13 +31,13 @@ export function Header() {
 
         <div className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
           {/* Logo */}
-          <Link href="/" className="block">
+          <Link href="/" className="block py-3">
             <Image
               src="/logo.png"
               alt="Skowronek Studio"
               width={820}
               height={180}
-              className={`h-30 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
+              className={`h-24 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
                 isScrolled
                   ? ''
                   : 'brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]'
