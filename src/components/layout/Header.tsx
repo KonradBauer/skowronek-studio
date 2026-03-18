@@ -37,7 +37,7 @@ export function Header() {
               alt="Skowronek Studio"
               width={820}
               height={180}
-              className={`h-28 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
+              className={`h-36 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
                 isScrolled
                   ? ''
                   : 'brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]'

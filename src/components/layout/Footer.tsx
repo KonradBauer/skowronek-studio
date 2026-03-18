@@ -16,7 +16,7 @@ export function Footer() {
               alt="Skowronek Studio"
               width={180}
               height={66}
-              className="h-12 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </Link>
 
