@@ -5,42 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
-
-// Placeholder — docelowo pobierane z Google Places API
-const REVIEWS = [
-  {
-    author: 'Anna K.',
-    rating: 5,
-    text: 'Fantastyczna obsługa naszego wesela! Zdjęcia przeszły nasze najśmielsze oczekiwania. Polecamy z całego serca!',
-    date: '2 miesiące temu',
-  },
-  {
-    author: 'Marek W.',
-    rating: 5,
-    text: 'Profesjonalizm na najwyższym poziomie. Sesja rodzinna w plenerze — naturalne, piękne kadry. Dzieci uwielbiały fotografa!',
-    date: '3 miesiące temu',
-  },
-  {
-    author: 'Kasia i Tomek',
-    rating: 5,
-    text: 'Nasz teledysk ślubny to małe dzieło sztuki. Każdy kto go widzi, pyta o kontakt do studia. Dziękujemy!',
-    date: '1 miesiąc temu',
-  },
-  {
-    author: 'Magda S.',
-    rating: 5,
-    text: 'Sesja ciążowa w plenerze — lepiej sobie nie mogłam wymarzyć. Piękne, naturalne kadry, świetna atmosfera.',
-    date: '2 tygodnie temu',
-  },
-  {
-    author: 'Paweł i Ola',
-    rating: 5,
-    text: 'Od pierwszego spotkania wiedzieliśmy, że to nasz fotograf. Efekt końcowy? Płakaliśmy ze szczęścia oglądając zdjęcia.',
-    date: '1 miesiąc temu',
-  },
-]
+import type { GoogleReview } from '@/lib/google-reviews'
 
 const INTERVAL = 5000
+const GOOGLE_MAPS_URL =
+  'https://www.google.com/maps/place/Skowronek+Studio/@50.826258,19.095474,17z/data=!3m1!4b1!4m6!3m5!1s0x4710b7a1f9da3c9d:0xec191a5533d2b0e3!8m2!3d50.826258!4d19.095474!16s%2Fg%2F11y4b2t9cl'
 
 function Stars({ count }: { count: number }) {
   return (
@@ -60,7 +29,7 @@ function Stars({ count }: { count: number }) {
   )
 }
 
-function ReviewCard({ review }: { review: typeof REVIEWS[number] }) {
+function ReviewCard({ review }: { review: GoogleReview }) {
   return (
     <div className="flex h-full flex-col border border-warm-gray bg-white p-8">
       <Stars count={review.rating} />
@@ -68,7 +37,16 @@ function ReviewCard({ review }: { review: typeof REVIEWS[number] }) {
         &ldquo;{review.text}&rdquo;
       </p>
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm font-medium text-dark">{review.author}</p>
+        <div className="flex items-center gap-3">
+          {review.profilePhoto && (
+            <img
+              src={review.profilePhoto}
+              alt=""
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          )}
+          <p className="text-sm font-medium text-dark">{review.author}</p>
+        </div>
         <p className="text-xs text-body/50">{review.date}</p>
       </div>
       <div className="mt-4 flex items-center gap-1.5 text-body/40">
@@ -85,22 +63,42 @@ function ReviewCard({ review }: { review: typeof REVIEWS[number] }) {
 }
 
 export function ReviewsSection() {
+  const [reviews, setReviews] = useState<GoogleReview[]>([])
+  const [rating, setRating] = useState(5)
+  const [totalReviews, setTotalReviews] = useState(0)
   const [current, setCurrent] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/reviews')
+      .then((res) => res.json())
+      .then((data) => {
+        setReviews(data.reviews)
+        setRating(data.rating)
+        setTotalReviews(data.totalReviews)
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [])
 
   const advance = useCallback(() => {
-    setCurrent((prev) => (prev + 1) % REVIEWS.length)
-  }, [])
+    if (reviews.length === 0) return
+    setCurrent((prev) => (prev + 1) % reviews.length)
+  }, [reviews.length])
 
   useEffect(() => {
     const timer = setInterval(advance, INTERVAL)
     return () => clearInterval(timer)
   }, [advance])
 
-  // Show 3 reviews at a time on desktop, 1 on mobile
+  if (!loaded || reviews.length === 0) {
+    return null
+  }
+
   const getVisibleReviews = () => {
     const indices = []
-    for (let i = 0; i < 3; i++) {
-      indices.push((current + i) % REVIEWS.length)
+    for (let i = 0; i < Math.min(3, reviews.length); i++) {
+      indices.push((current + i) % reviews.length)
     }
     return indices
   }
@@ -114,8 +112,11 @@ export function ReviewsSection() {
           <p className="mb-4 text-sm uppercase tracking-[0.2em] text-primary">Opinie</p>
           <Heading as="h2">Co mowia nasi klienci</Heading>
           <div className="mt-4 flex items-center justify-center gap-2">
-            <Stars count={5} />
-            <span className="text-sm text-body">5.0 na Google</span>
+            <Stars count={Math.round(rating)} />
+            <span className="text-sm text-body">
+              {rating.toFixed(1)} na Google
+              {totalReviews > 0 && ` (${totalReviews} opinii)`}
+            </span>
           </div>
         </div>
       </AnimatedSection>
@@ -132,7 +133,7 @@ export function ReviewsSection() {
                 exit={{ opacity: 0, x: -40 }}
                 transition={{ duration: 0.5, ease: [0.76, 0, 0.24, 1] }}
               >
-                <ReviewCard review={REVIEWS[idx]} />
+                <ReviewCard review={reviews[idx]} />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -150,7 +151,7 @@ export function ReviewsSection() {
               exit={{ opacity: 0, x: -60 }}
               transition={{ duration: 0.4, ease: [0.76, 0, 0.24, 1] }}
             >
-              <ReviewCard review={REVIEWS[current]} />
+              <ReviewCard review={reviews[current]} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -158,7 +159,7 @@ export function ReviewsSection() {
 
       {/* Dots */}
       <div className="mt-8 flex items-center justify-center gap-2">
-        {REVIEWS.map((_, i) => (
+        {reviews.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
@@ -174,7 +175,7 @@ export function ReviewsSection() {
       <AnimatedSection delay={0.4}>
         <div className="mt-8 text-center">
           <a
-            href="https://www.google.com/maps/place/Skowronek+Studio/@50.826258,19.095474,17z/data=!3m1!4b1!4m6!3m5!1s0x4710b7a1f9da3c9d:0xec191a5533d2b0e3!8m2!3d50.826258!4d19.095474!16s%2Fg%2F11y4b2t9cl"
+            href={GOOGLE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm uppercase tracking-[0.15em] text-primary transition-colors hover:text-primary-dark"
