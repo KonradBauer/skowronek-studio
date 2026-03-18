@@ -19,6 +19,15 @@ export const Clients: CollectionConfig = {
   },
   fields: [
     {
+      name: 'generatePassword',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/src/components/admin/GeneratePasswordButton',
+        },
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
