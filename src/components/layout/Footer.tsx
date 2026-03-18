@@ -40,12 +40,12 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Nawigacja
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-0">
               {NAV_LINKS.map(({ label, href }) => (
                 <li key={href}>
                   <a
                     href={href}
-                    className="text-sm text-body-muted transition-colors hover:text-primary"
+                    className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
                   >
                     {label}
                   </a>
@@ -54,7 +54,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/login"
-                  className="text-sm text-body-muted transition-colors hover:text-primary"
+                  className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
                 >
                   Panel klienta
                 </Link>
@@ -67,18 +67,18 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Kontakt
             </h3>
-            <ul className="space-y-2 text-sm text-body-muted">
+            <ul className="space-y-0 text-sm text-body-muted">
               <li>
-                <a href="mailto:kontakt@skowronekstudio.pl" className="transition-colors hover:text-primary">
+                <a href="mailto:kontakt@skowronekstudio.pl" className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
                   kontakt@skowronekstudio.pl
                 </a>
               </li>
               <li>
-                <a href="tel:+48123456789" className="transition-colors hover:text-primary">
+                <a href="tel:+48123456789" className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
                   +48 123 456 789
                 </a>
               </li>
-              <li>ul. Przykladowa 10, Czestochowa</li>
+              <li className="flex min-h-11 items-center">ul. Przykladowa 10, Czestochowa</li>
             </ul>
           </div>
 
@@ -87,12 +87,12 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Social
             </h3>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <a
                 href="https://www.facebook.com/profile.php?id=61559126443122"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-body-muted transition-colors hover:text-primary"
+                className="flex min-h-11 min-w-11 items-center justify-center text-body-muted transition-colors hover:text-primary"
                 aria-label="Facebook"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -103,7 +103,7 @@ export function Footer() {
                 href="https://www.instagram.com/skowronek_studio"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-body-muted transition-colors hover:text-primary"
+                className="flex min-h-11 min-w-11 items-center justify-center text-body-muted transition-colors hover:text-primary"
                 aria-label="Instagram"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">

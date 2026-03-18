@@ -56,13 +56,13 @@ export function ContactSection() {
           <div className="space-y-4 text-body">
             <div>
               <p className="text-sm uppercase tracking-[0.1em] text-primary">Email</p>
-              <a href="mailto:kontakt@skowronekstudio.pl" className="transition-colors hover:text-primary">
+              <a href="mailto:kontakt@skowronekstudio.pl" className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
                 kontakt@skowronekstudio.pl
               </a>
             </div>
             <div>
               <p className="text-sm uppercase tracking-[0.1em] text-primary">Telefon</p>
-              <a href="tel:+48123456789" className="transition-colors hover:text-primary">
+              <a href="tel:+48123456789" className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
                 +48 123 456 789
               </a>
             </div>
@@ -73,12 +73,13 @@ export function ContactSection() {
           </div>
 
           {/* Social */}
-          <div className="mt-8 flex items-center gap-4">
+          {/* Social */}
+          <div className="mt-8 flex items-center gap-1">
             <a
               href="https://www.facebook.com/profile.php?id=61559126443122"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-body transition-colors hover:text-primary"
+              className="flex min-h-11 min-w-11 items-center justify-center text-body transition-colors hover:text-primary"
               aria-label="Facebook"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -89,7 +90,7 @@ export function ContactSection() {
               href="https://www.instagram.com/skowronek_studio"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-body transition-colors hover:text-primary"
+              className="flex min-h-11 min-w-11 items-center justify-center text-body transition-colors hover:text-primary"
               aria-label="Instagram"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">

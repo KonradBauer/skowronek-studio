@@ -158,16 +158,20 @@ export function ReviewsSection() {
       </div>
 
       {/* Dots */}
-      <div className="mt-8 flex items-center justify-center gap-2">
+      <div className="mt-8 flex items-center justify-center gap-1">
         {reviews.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              i === current ? 'w-6 bg-primary' : 'w-2 bg-warm-gray hover:bg-primary/40'
-            }`}
+            className="flex min-h-11 min-w-11 items-center justify-center"
             aria-label={`Opinia ${i + 1}`}
-          />
+          >
+            <span
+              className={`block h-2.5 rounded-full transition-all duration-300 ${
+                i === current ? 'w-6 bg-primary' : 'w-2.5 bg-input-border hover:bg-primary/60'
+              }`}
+            />
+          </button>
         ))}
       </div>
 
@@ -178,7 +182,7 @@ export function ReviewsSection() {
             href={GOOGLE_MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm uppercase tracking-[0.15em] text-primary transition-colors hover:text-primary-dark"
+            className="inline-flex min-h-11 items-center text-sm uppercase tracking-[0.15em] text-primary transition-colors hover:text-primary-dark"
           >
             Zobacz wszystkie opinie na Google &rarr;
           </a>

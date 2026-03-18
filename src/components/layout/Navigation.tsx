@@ -35,7 +35,7 @@ export function Navigation({ className = '', onItemClick, vertical = false, isOv
                 href={href}
                 onClick={onItemClick}
                 className={`
-                  text-sm uppercase tracking-[0.15em] transition-colors duration-[var(--duration-normal)] ${textShadow}
+                  inline-flex min-h-11 items-center text-sm uppercase tracking-[0.15em] transition-colors duration-[var(--duration-normal)] ${textShadow}
                   ${vertical ? 'text-2xl tracking-[0.2em] font-light' : ''}
                   ${isOverHero
                     ? isActive ? 'text-white' : 'text-white/80 hover:text-white'
