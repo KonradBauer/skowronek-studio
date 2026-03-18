@@ -69,6 +69,11 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-primary);
 }
 
+/* Cursor pointer na interaktywnych elementach */
+a, button, [role="button"] {
+  cursor: pointer;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   html {
