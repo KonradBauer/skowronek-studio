@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 
 export function Footer() {
@@ -8,9 +10,15 @@ export function Footer() {
       <Container>
         <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
           {/* Logo */}
-          <a href="/" className="text-lg font-light tracking-[0.2em] uppercase text-dark">
-            Skowronek Studio
-          </a>
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="Skowronek Studio"
+              width={180}
+              height={66}
+              className="h-12 w-auto object-contain"
+            />
+          </Link>
 
           {/* Social */}
           <div className="flex items-center gap-6">

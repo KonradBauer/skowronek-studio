@@ -21,7 +21,8 @@
       "Bash(PGPASSWORD='4815162342fr33d0FR##D\\)' \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -c \"CREATE DATABASE skowronekstudio;\" 2>&1)",
       "Bash(taskkill:*)",
       "Bash(curl:*)",
-      "Bash(file:*)"
+      "Bash(file:*)",
+      "Bash(npx next:*)"
     ]
   }
 }

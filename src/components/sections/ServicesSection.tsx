@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
@@ -43,10 +44,12 @@ export function ServicesSection() {
             <div className="group overflow-hidden border border-warm-gray bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-lg">
               {/* Image */}
               <div className="relative aspect-[16/9] overflow-hidden">
-                <img
+                <Image
                   src={service.image}
                   alt={service.title}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
               {/* Text */}

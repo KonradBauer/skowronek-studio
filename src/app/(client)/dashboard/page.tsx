@@ -1,5 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ExpirationBanner } from '@/components/client/ExpirationBanner'
@@ -61,11 +63,9 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-3xl px-6 py-12">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
-        <div>
-          <a href="/" className="text-lg font-light tracking-[0.2em] uppercase text-dark">
-            Skowronek Studio
-          </a>
-        </div>
+        <Link href="/">
+          <Image src="/logo.png" alt="Skowronek Studio" width={180} height={66} className="h-12 w-auto object-contain" />
+        </Link>
         <form action="/api/clients/logout" method="POST">
           <button
             type="submit"

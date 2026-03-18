@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useNavigationStore } from '@/stores/navigationStore'
 
 const NAV_ITEMS = [
@@ -48,7 +49,7 @@ export function Navigation({ className = '', onItemClick, vertical = false, isOv
           )
         })}
         <li>
-          <a
+          <Link
             href="/login"
             className={`
               inline-block px-5 py-2 text-sm uppercase tracking-[0.15em]
@@ -61,7 +62,7 @@ export function Navigation({ className = '', onItemClick, vertical = false, isOv
             `}
           >
             Panel klienta
-          </a>
+          </Link>
         </li>
       </ul>
     </nav>

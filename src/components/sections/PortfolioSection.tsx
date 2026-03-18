@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
@@ -28,10 +29,12 @@ export function PortfolioSection() {
           <AnimatedSection key={item.id} variant="scale-in" delay={i * 0.1}>
             <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-warm-gray">
               {/* Image */}
-              <img
+              <Image
                 src={item.image}
                 alt={item.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
               />
 
               {/* Hover overlay */}

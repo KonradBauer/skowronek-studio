@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
@@ -11,10 +12,12 @@ export function AboutSection() {
         {/* Image */}
         <AnimatedSection variant="fade-left">
           <div className="relative aspect-[3/4] overflow-hidden bg-warm-gray">
-            <img
+            <Image
               src="/images/about.jpg"
               alt="Fotograf Skowronek Studio przy pracy"
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
             />
           </div>
         </AnimatedSection>

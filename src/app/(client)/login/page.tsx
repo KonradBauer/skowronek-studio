@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 export default function LoginPage() {
@@ -43,9 +45,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <a href="/" className="mb-12 block text-center text-2xl font-light tracking-[0.2em] uppercase text-dark">
-          Skowronek Studio
-        </a>
+        <Link href="/" className="mb-12 flex justify-center">
+          <Image src="/logo.png" alt="Skowronek Studio" width={200} height={74} className="h-16 w-auto object-contain" />
+        </Link>
 
         <div className="bg-white p-8 shadow-sm">
           <h1 className="mb-2 text-center text-xl font-light tracking-wide text-dark">
