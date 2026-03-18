@@ -1,0 +1,41 @@
+import { Container } from '@/components/ui/Container'
+
+export function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  return (
+    <footer className="border-t border-warm-gray bg-cream py-12">
+      <Container>
+        <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
+          {/* Logo */}
+          <a href="/" className="text-lg font-light tracking-[0.2em] uppercase text-dark">
+            Skowronek Studio
+          </a>
+
+          {/* Social */}
+          <div className="flex items-center gap-6">
+            <a
+              href="#"
+              className="text-sm uppercase tracking-[0.1em] text-body transition-colors hover:text-primary"
+              aria-label="Facebook"
+            >
+              Facebook
+            </a>
+            <a
+              href="#"
+              className="text-sm uppercase tracking-[0.1em] text-body transition-colors hover:text-primary"
+              aria-label="Instagram"
+            >
+              Instagram
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <p className="text-sm text-body/60">
+            &copy; {currentYear} Skowronek Studio
+          </p>
+        </div>
+      </Container>
+    </footer>
+  )
+}

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:anitaherba.pl)",
+      "WebFetch(domain:www.amylombard.com)",
+      "WebFetch(domain:amylombard.com)",
+      "WebFetch(domain:payloadcms.com)",
+      "WebFetch(domain:tus.io)",
+      "Bash(node:*)",
+      "Bash(pnpm init:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(npx tsc:*)",
+      "Bash(psql:*)",
+      "Bash(\"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -c \"SELECT 1;\" 2>&1)",
+      "Bash(\"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -w -c \"SELECT 1;\" 2>&1; echo \"EXIT:$?\")",
+      "Bash(\"/c/Program Files/PostgreSQL/18/bin/pg_isready.exe\" 2>&1)",
+      "Bash(PGPASSWORD=postgres \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -c \"SELECT 1;\" 2>&1)",
+      "Bash(for pass:*)",
+      "Bash(PGPASSWORD='4815162342fr33d0FR##D\\)' \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -c \"SELECT 1;\" 2>&1)",
+      "Bash(PGPASSWORD='4815162342fr33d0FR##D\\)' \"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -U postgres -c \"CREATE DATABASE skowronekstudio;\" 2>&1)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(file:*)"
+    ]
+  }
+}
