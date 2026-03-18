@@ -30,7 +30,7 @@ export function Footer() {
                 className="h-20 w-auto object-contain"
               />
             </Link>
-            <p className="mt-4 text-sm leading-relaxed text-body/70">
+            <p className="mt-4 text-sm leading-relaxed text-body-muted">
               Profesjonalne studio fotograficzne. Uchwycamy chwile, ktore zostaja na zawsze.
             </p>
           </div>
@@ -45,7 +45,7 @@ export function Footer() {
                 <li key={href}>
                   <a
                     href={href}
-                    className="text-sm text-body/70 transition-colors hover:text-primary"
+                    className="text-sm text-body-muted transition-colors hover:text-primary"
                   >
                     {label}
                   </a>
@@ -54,7 +54,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/login"
-                  className="text-sm text-body/70 transition-colors hover:text-primary"
+                  className="text-sm text-body-muted transition-colors hover:text-primary"
                 >
                   Panel klienta
                 </Link>
@@ -67,7 +67,7 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Kontakt
             </h3>
-            <ul className="space-y-2 text-sm text-body/70">
+            <ul className="space-y-2 text-sm text-body-muted">
               <li>
                 <a href="mailto:kontakt@skowronekstudio.pl" className="transition-colors hover:text-primary">
                   kontakt@skowronekstudio.pl
@@ -92,7 +92,7 @@ export function Footer() {
                 href="https://www.facebook.com/profile.php?id=61559126443122"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-body/70 transition-colors hover:text-primary"
+                className="text-body-muted transition-colors hover:text-primary"
                 aria-label="Facebook"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -103,7 +103,7 @@ export function Footer() {
                 href="https://www.instagram.com/skowronek_studio"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-body/70 transition-colors hover:text-primary"
+                className="text-body-muted transition-colors hover:text-primary"
                 aria-label="Instagram"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -116,7 +116,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-warm-gray py-6">
-          <p className="text-center text-xs text-body/50">
+          <p className="text-center text-xs text-body-muted">
             &copy; {currentYear} Skowronek Studio. Wszelkie prawa zastrzezone.
           </p>
         </div>

@@ -31,7 +31,7 @@ function Stars({ count }: { count: number }) {
 
 function ReviewCard({ review }: { review: GoogleReview }) {
   return (
-    <div className="flex h-full flex-col border border-warm-gray bg-white p-8">
+    <div className="flex h-full flex-col border border-input-border bg-white p-8">
       <Stars count={review.rating} />
       <p className="mt-4 flex-1 leading-relaxed text-body italic">
         &ldquo;{review.text}&rdquo;
@@ -47,9 +47,9 @@ function ReviewCard({ review }: { review: GoogleReview }) {
           )}
           <p className="text-sm font-medium text-dark">{review.author}</p>
         </div>
-        <p className="text-xs text-body/50">{review.date}</p>
+        <p className="text-xs text-body-muted">{review.date}</p>
       </div>
-      <div className="mt-4 flex items-center gap-1.5 text-body/40">
+      <div className="mt-4 flex items-center gap-1.5 text-body-muted">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />

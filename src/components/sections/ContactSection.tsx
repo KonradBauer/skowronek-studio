@@ -111,7 +111,7 @@ export function ContactSection() {
                 name="name"
                 type="text"
                 required
-                className="w-full border-b border-warm-gray bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full border-b border-input-border bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
             <div>
@@ -123,7 +123,7 @@ export function ContactSection() {
                 name="email"
                 type="email"
                 required
-                className="w-full border-b border-warm-gray bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full border-b border-input-border bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
             <div>
@@ -134,7 +134,7 @@ export function ContactSection() {
                 id="phone"
                 name="phone"
                 type="tel"
-                className="w-full border-b border-warm-gray bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full border-b border-input-border bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
             <div>
@@ -146,7 +146,7 @@ export function ContactSection() {
                 name="message"
                 rows={4}
                 required
-                className="w-full resize-none border-b border-warm-gray bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full resize-none border-b border-input-border bg-transparent px-0 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
 

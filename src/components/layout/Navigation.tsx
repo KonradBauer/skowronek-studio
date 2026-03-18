@@ -39,7 +39,7 @@ export function Navigation({ className = '', onItemClick, vertical = false, isOv
                   ${vertical ? 'text-2xl tracking-[0.2em] font-light' : ''}
                   ${isOverHero
                     ? isActive ? 'text-white' : 'text-white/80 hover:text-white'
-                    : isActive ? 'text-primary' : 'text-dark/70 hover:text-dark'
+                    : isActive ? 'text-primary' : 'text-body-muted hover:text-dark'
                   }
                 `}
               >

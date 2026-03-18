@@ -41,7 +41,7 @@ export function ServicesSection() {
       <div className="grid gap-8 sm:grid-cols-2">
         {SERVICES.map((service, i) => (
           <AnimatedSection key={service.title} variant="fade-up" delay={i * 0.15}>
-            <div className="group overflow-hidden border border-warm-gray bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-lg">
+            <div className="group overflow-hidden border border-input-border bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-lg">
               {/* Image */}
               <div className="relative aspect-[16/9] overflow-hidden">
                 <Image

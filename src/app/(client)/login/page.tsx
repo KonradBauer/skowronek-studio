@@ -67,7 +67,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
-                className="w-full border border-warm-gray bg-transparent px-4 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full border border-input-border bg-transparent px-4 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
             <div>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 name="password"
                 type="password"
                 required
-                className="w-full border border-warm-gray bg-transparent px-4 py-3 text-dark outline-none transition-colors focus:border-primary"
+                className="w-full border border-input-border bg-transparent px-4 py-3 text-dark outline-none transition-colors focus:border-primary"
               />
             </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-body/60">
+        <p className="mt-6 text-center text-sm text-body-muted">
           Dane logowania otrzymujesz od studia po sesji
         </p>
       </div>

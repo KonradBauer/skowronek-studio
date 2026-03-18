@@ -37,7 +37,7 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
   }
 
   return (
-    <div className="group flex items-center gap-4 border border-warm-gray bg-white p-4 transition-colors hover:border-primary/30">
+    <div className="group flex items-center gap-4 border border-input-border bg-white p-4 transition-colors hover:border-primary/30">
       {/* Icon */}
       <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-cream text-primary">
         {isImage ? (
@@ -63,7 +63,7 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
         <p className="truncate text-sm font-medium text-dark">
           {displayName || filename}
         </p>
-        <p className="text-xs text-body/60">{formatFileSize(filesize)}</p>
+        <p className="text-xs text-body-muted">{formatFileSize(filesize)}</p>
       </div>
 
       {/* Download */}

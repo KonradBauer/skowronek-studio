@@ -2,14 +2,16 @@
 
 @theme {
   /* Ciepłe neutralne — elegancja, naturalna fotograficzna estetyka */
-  --color-primary: #8B7355;
+  --color-primary: #826D4C;
   --color-primary-dark: #6B5740;
   --color-cream: #FAF7F2;
   --color-warm-gray: #E8E2DA;
   --color-dark: #2C2420;
   --color-body: #5C5147;
+  --color-body-muted: #6F6A63;
   --color-white: #FFFFFF;
   --color-accent: #C4A882;
+  --color-input-border: #958D84;
 
   /* Font stack — tymczasowy, docelowy od klienta */
   --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
@@ -48,7 +50,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Selection color */
 ::selection {
   background-color: var(--color-accent);
-  color: var(--color-white);
+  color: var(--color-dark);
 }
 
 /* Scrollbar styling */

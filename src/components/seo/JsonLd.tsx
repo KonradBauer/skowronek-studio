@@ -11,7 +11,7 @@ const localBusinessSchema = {
   image: `${SITE_URL}/og-image.jpg`,
   telephone: '+48123456789',
   email: 'kontakt@skowronekstudio.pl',
-  address: {, s
+  address: {
     '@type': 'PostalAddress',
     streetAddress: 'ul. Przykladowa 10',
     addressLocality: 'Czestochowa',
