@@ -1,24 +1,44 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigationStore } from '@/stores/navigationStore'
 
 const SECTIONS = ['about', 'portfolio', 'services', 'contact']
+const SCROLL_THRESHOLD = 50
+const HIDE_DELTA = 8
 
 export function useScrollSpy() {
   const setActiveSection = useNavigationStore((s) => s.setActiveSection)
   const setIsScrolled = useNavigationStore((s) => s.setIsScrolled)
+  const setIsHeaderVisible = useNavigationStore((s) => s.setIsHeaderVisible)
+  const prevScrollY = useRef(0)
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      const currentY = window.scrollY
+
+      setIsScrolled(currentY > SCROLL_THRESHOLD)
+
+      // Na samej gorze - zawsze widoczny
+      if (currentY < SCROLL_THRESHOLD) {
+        setIsHeaderVisible(true)
+      } else {
+        const delta = currentY - prevScrollY.current
+        if (delta > HIDE_DELTA) {
+          setIsHeaderVisible(false) // scroll down - chowaj
+        } else if (delta < -HIDE_DELTA) {
+          setIsHeaderVisible(true) // scroll up - pokazuj
+        }
+      }
+
+      prevScrollY.current = currentY
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
 
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [setIsScrolled])
+  }, [setIsScrolled, setIsHeaderVisible])
 
   useEffect(() => {
     const observer = new IntersectionObserver(

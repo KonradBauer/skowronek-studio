@@ -11,6 +11,7 @@ export function Header() {
   useScrollSpy()
 
   const isScrolled = useNavigationStore((s) => s.isScrolled)
+  const isHeaderVisible = useNavigationStore((s) => s.isHeaderVisible)
   const isMenuOpen = useNavigationStore((s) => s.isMenuOpen)
   const toggleMenu = useNavigationStore((s) => s.toggleMenu)
 
@@ -19,6 +20,7 @@ export function Header() {
       <header
         className={`
           fixed top-0 left-0 right-0 z-50 transition-all duration-[var(--duration-slow)]
+          ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'}
           ${isScrolled
             ? 'bg-white/95 backdrop-blur-sm shadow-sm py-0'
             : 'py-0'
