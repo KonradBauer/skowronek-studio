@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 export const ClientFiles: CollectionConfig = {
   slug: 'client-files',
+  labels: { singular: 'Plik klienta', plural: 'Pliki klientow' },
   upload: {
     mimeTypes: ['image/*', 'video/*'],
     staticDir: 'uploads/client-files',
@@ -12,6 +13,7 @@ export const ClientFiles: CollectionConfig = {
   admin: {
     useAsTitle: 'filename',
     defaultColumns: ['filename', 'client', 'category', 'filesize', 'createdAt'],
+    hidden: true,
   },
   access: {
     read: ({ req: { user } }) => {

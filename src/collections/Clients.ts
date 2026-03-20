@@ -10,6 +10,7 @@ function getDefaultExpiryDate(): string {
 
 export const Clients: CollectionConfig = {
   slug: 'clients',
+  labels: { singular: 'Klient', plural: 'Klienci' },
   auth: true,
   admin: {
     useAsTitle: 'name',

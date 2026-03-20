@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 
 const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB
@@ -12,6 +12,14 @@ interface FileEntry {
   status: UploadStatus
   progress: number
   error?: string
+}
+
+interface ExistingFile {
+  id: number
+  filename: string
+  mimeType: string
+  filesize: number
+  category: string
 }
 
 function formatSize(bytes: number): string {
@@ -29,7 +37,6 @@ async function uploadFile(
 ): Promise<void> {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
 
-  // Init upload
   const initRes = await fetch('/api/upload/init', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -49,7 +56,6 @@ async function uploadFile(
 
   const { uploadId } = await initRes.json()
 
-  // Send chunks
   for (let i = 0; i < totalChunks; i++) {
     const start = i * CHUNK_SIZE
     const end = Math.min(start + CHUNK_SIZE, file.size)
@@ -73,7 +79,6 @@ async function uploadFile(
     onProgress(((i + 1) / totalChunks) * 100)
   }
 
-  // Complete
   const completeRes = await fetch('/api/upload/complete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -99,8 +104,54 @@ export const BulkUploadPanel = () => {
   const [videos, setVideos] = useState<FileEntry[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([])
+  const [loadingFiles, setLoadingFiles] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch existing files for this client
+  const fetchExistingFiles = useCallback(async () => {
+    if (!id) return
+    setLoadingFiles(true)
+    try {
+      const res = await fetch(`/api/client-files?where[client][equals]=${id}&limit=500&sort=createdAt`)
+      if (res.ok) {
+        const data = await res.json()
+        setExistingFiles(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (data.docs || []).map((d: any) => ({
+            id: d.id,
+            filename: d.filename || '',
+            mimeType: d.mimeType || '',
+            filesize: d.filesize || 0,
+            category: d.category || 'photo',
+          })),
+        )
+      }
+    } catch {
+      // ignore fetch errors
+    }
+    setLoadingFiles(false)
+  }, [id])
+
+  useEffect(() => {
+    fetchExistingFiles()
+  }, [fetchExistingFiles])
+
+  const handleDeleteFile = async (fileId: number) => {
+    if (!confirm('Usunac ten plik?')) return
+    setDeletingId(fileId)
+    try {
+      const res = await fetch(`/api/client-files/${fileId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setExistingFiles((prev) => prev.filter((f) => f.id !== fileId))
+      }
+    } catch {
+      // ignore
+    }
+    setDeletingId(null)
+  }
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const fileArray = Array.from(files)
@@ -143,7 +194,6 @@ export const BulkUploadPanel = () => {
     if (!id) return
     setIsUploading(true)
 
-    // Upload photos sequentially, tracking combined progress
     const totalPhotoBytes = photos.reduce((sum, p) => sum + p.file.size, 0)
     let uploadedPhotoBytes = 0
 
@@ -186,7 +236,6 @@ export const BulkUploadPanel = () => {
       }
     }
 
-    // Upload videos one by one, each with individual progress
     for (let i = 0; i < videos.length; i++) {
       const video = videos[i]
       if (video.status === 'done') continue
@@ -217,6 +266,8 @@ export const BulkUploadPanel = () => {
     }
 
     setIsUploading(false)
+    // Refresh existing files list after upload
+    fetchExistingFiles()
   }
 
   if (!id) {
@@ -226,6 +277,9 @@ export const BulkUploadPanel = () => {
       </div>
     )
   }
+
+  const existingPhotos = existingFiles.filter((f) => f.category === 'photo')
+  const existingVideos = existingFiles.filter((f) => f.category === 'video')
 
   const photosProgress =
     photos.length > 0 && photos.some((p) => p.status === 'uploading')
@@ -242,7 +296,77 @@ export const BulkUploadPanel = () => {
 
   return (
     <div style={styles.container}>
-      <h3 style={styles.title}>Wgrywanie plikow klienta</h3>
+      {/* Existing files section */}
+      {existingFiles.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={styles.title}>Wgrane pliki klienta</h3>
+
+          {existingPhotos.length > 0 && (
+            <div style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.sectionTitle}>
+                  Zdjecia ({existingPhotos.length}) - {formatSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
+                </span>
+              </div>
+              <div style={styles.existingGrid}>
+                {existingPhotos.map((file) => (
+                  <div key={file.id} style={styles.existingTile}>
+                    <img
+                      src={`/api/client-files/file/${file.filename}`}
+                      alt={file.filename}
+                      style={styles.existingThumb}
+                      loading="lazy"
+                    />
+                    <div style={styles.existingOverlay}>
+                      <span style={styles.existingName}>{file.filename}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteFile(file.id)}
+                        disabled={deletingId === file.id}
+                        style={styles.deleteBtn}
+                      >
+                        {deletingId === file.id ? '...' : 'x'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {existingVideos.length > 0 && (
+            <div style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.sectionTitle}>
+                  Filmy ({existingVideos.length}) - {formatSize(existingVideos.reduce((s, f) => s + f.filesize, 0))}
+                </span>
+              </div>
+              <div style={styles.fileList}>
+                {existingVideos.map((file) => (
+                  <div key={file.id} style={styles.fileItem}>
+                    <span style={{ ...styles.fileName, color: '#826D4C' }}>&#9654;</span>
+                    <span style={styles.fileName}>{file.filename}</span>
+                    <span style={styles.fileSize}>{formatSize(file.filesize)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(file.id)}
+                      disabled={deletingId === file.id}
+                      style={styles.deleteBtn}
+                    >
+                      {deletingId === file.id ? '...' : 'x'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loadingFiles && <p style={styles.hint}>Ladowanie plikow...</p>}
+
+      {/* Upload section */}
+      <h3 style={styles.title}>Wgrywanie nowych plikow</h3>
 
       {/* Drop zone */}
       <div
@@ -315,7 +439,6 @@ export const BulkUploadPanel = () => {
             )}
           </div>
 
-          {/* Combined progress bar for photos */}
           {photos.some((p) => p.status === 'uploading' || p.status === 'done') && (
             <div style={styles.progressContainer}>
               <div style={styles.progressBar}>
@@ -331,7 +454,6 @@ export const BulkUploadPanel = () => {
             </div>
           )}
 
-          {/* Photo list */}
           <div style={styles.fileList}>
             {photos.map((photo, i) => (
               <div key={`photo-${i}`} style={styles.fileItem}>
@@ -368,7 +490,6 @@ export const BulkUploadPanel = () => {
             )}
           </div>
 
-          {/* Individual progress per video */}
           {videos.map((video, i) => (
             <div key={`video-${i}`} style={styles.videoItem}>
               <div style={styles.videoHeader}>
@@ -554,6 +675,16 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     padding: '0 4px',
   },
+  deleteBtn: {
+    background: 'none',
+    border: '1px solid #ef4444',
+    color: '#ef4444',
+    cursor: 'pointer',
+    fontSize: '12px',
+    padding: '2px 8px',
+    borderRadius: '3px',
+    flexShrink: 0,
+  },
   progressContainer: {
     display: 'flex',
     alignItems: 'center',
@@ -598,6 +729,44 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     fontWeight: 600,
     transition: 'opacity 0.2s',
+  },
+  existingGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+    gap: '8px',
+    maxHeight: '300px',
+    overflowY: 'auto' as const,
+  },
+  existingTile: {
+    position: 'relative' as const,
+    aspectRatio: '1',
+    overflow: 'hidden',
+    borderRadius: '4px',
+    background: '#f3f4f6',
+  },
+  existingThumb: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+  },
+  existingOverlay: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+    padding: '4px 6px',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  existingName: {
+    fontSize: '10px',
+    color: 'white',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+    flex: 1,
   },
 }
 

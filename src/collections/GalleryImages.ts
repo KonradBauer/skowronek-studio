@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 export const GalleryImages: CollectionConfig = {
   slug: 'gallery-images',
+  labels: { singular: 'Zdjecie galerii', plural: 'Galeria' },
   upload: {
     staticDir: 'uploads/gallery',
     mimeTypes: ['image/*'],

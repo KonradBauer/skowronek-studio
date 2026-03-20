@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/Button'
 
 interface FileData {
@@ -53,12 +53,24 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
   const lightboxPhoto = lightboxId ? photos.find((p) => p.id === lightboxId) : null
   const lightboxIndex = lightboxId ? photos.findIndex((p) => p.id === lightboxId) : -1
 
-  function navigateLightbox(dir: -1 | 1) {
-    const newIndex = lightboxIndex + dir
+  const navigateLightbox = useCallback((dir: -1 | 1) => {
+    const idx = lightboxId ? photos.findIndex((p) => p.id === lightboxId) : -1
+    const newIndex = idx + dir
     if (newIndex >= 0 && newIndex < photos.length) {
       setLightboxId(photos[newIndex].id)
     }
-  }
+  }, [lightboxId, photos])
+
+  useEffect(() => {
+    if (!lightboxId) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') navigateLightbox(-1)
+      else if (e.key === 'ArrowRight') navigateLightbox(1)
+      else if (e.key === 'Escape') setLightboxId(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxId, navigateLightbox])
 
   return (
     <div>
