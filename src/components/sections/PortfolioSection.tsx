@@ -5,27 +5,42 @@ import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
 
-const GALLERY_ITEMS = [
+interface PortfolioItem {
+  id: number
+  title: string
+  category: string
+  image: string
+}
+
+interface PortfolioData {
+  title: string
+  subtitle: string
+  items: PortfolioItem[]
+}
+
+const FALLBACK_ITEMS: PortfolioItem[] = [
   { id: 1, title: 'Wesele Anny i Marka', category: 'Wesela', image: '/images/portfolio-1.jpg' },
   { id: 2, title: 'Sesja portretowa', category: 'Portrety', image: '/images/portfolio-2.jpg' },
-  { id: 3, title: 'Ślub w plenerze', category: 'Wesela', image: '/images/portfolio-3.jpg' },
+  { id: 3, title: 'Slub w plenerze', category: 'Wesela', image: '/images/portfolio-3.jpg' },
   { id: 4, title: 'Wesele nad morzem', category: 'Wesela', image: '/images/portfolio-4.jpg' },
-  { id: 5, title: 'Sesja narzeczeńska', category: 'Portrety', image: '/images/portfolio-5.jpg' },
+  { id: 5, title: 'Sesja narzeczenska', category: 'Portrety', image: '/images/portfolio-5.jpg' },
   { id: 6, title: 'Sesja rodzinna', category: 'Rodzinne', image: '/images/portfolio-6.jpg' },
 ]
 
-export function PortfolioSection() {
+export function PortfolioSection({ data }: { data: PortfolioData }) {
+  const items = data.items.length > 0 ? data.items : FALLBACK_ITEMS
+
   return (
     <Section id="portfolio">
       <AnimatedSection>
         <div className="mb-12 text-center">
-          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-primary">Portfolio</p>
-          <Heading as="h2">Nasze realizacje</Heading>
+          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-primary">{data.title}</p>
+          <Heading as="h2">{data.subtitle}</Heading>
         </div>
       </AnimatedSection>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {GALLERY_ITEMS.map((item, i) => (
+        {items.map((item, i) => (
           <AnimatedSection key={item.id} variant="scale-in" delay={i * 0.1}>
             <div className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-warm-gray">
               {/* Image */}

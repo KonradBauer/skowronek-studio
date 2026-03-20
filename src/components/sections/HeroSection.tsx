@@ -4,30 +4,31 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 
-// Hero images — docelowo z CMS (HomePage global)
-const HERO_IMAGES = [
-  '/images/hero-1.jpg',
-  '/images/hero-2.jpg',
-  '/images/hero-3.jpg',
-  '/images/hero-4.jpg',
-]
-
-// Ken Burns timing — these values define the hero feel
+// Ken Burns timing - these values define the hero feel
 const INTERVAL = 6000       // ms between slides
 const ZOOM_DURATION = 6     // seconds for zoom animation
 const CROSSFADE_DURATION = 1.5 // seconds for opacity transition
 
-export function HeroSection() {
+interface HeroData {
+  images: string[]
+  title: string
+  subtitle: string
+  ctaText: string
+  ctaLink: string
+}
+
+export function HeroSection({ data }: { data: HeroData }) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const advance = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length)
-  }, [])
+    setCurrentIndex((prev) => (prev + 1) % data.images.length)
+  }, [data.images.length])
 
   useEffect(() => {
+    if (data.images.length <= 1) return
     const timer = setInterval(advance, INTERVAL)
     return () => clearInterval(timer)
-  }, [advance])
+  }, [advance, data.images.length])
 
   return (
     <section className="relative h-screen w-full overflow-hidden">
@@ -43,7 +44,7 @@ export function HeroSection() {
         >
           <motion.div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${HERO_IMAGES[currentIndex]})` }}
+            style={{ backgroundImage: `url(${data.images[currentIndex]})` }}
             initial={{ scale: 1 }}
             animate={{ scale: 1.15 }}
             transition={{ duration: ZOOM_DURATION, ease: 'linear' }}
@@ -51,7 +52,7 @@ export function HeroSection() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Gradient overlay — layered for guaranteed text readability */}
+      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-dark/30" />
       <div className="absolute inset-0 bg-gradient-to-b from-dark/50 via-transparent to-dark/60" />
 
@@ -63,7 +64,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
         >
-          Fotografia z pasją
+          {data.subtitle}
         </motion.p>
 
         <motion.h1
@@ -72,7 +73,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
         >
-          Skowronek Studio
+          {data.title}
         </motion.h1>
 
         <motion.div
@@ -80,8 +81,8 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
         >
-          <Button variant="outline" size="lg" href="#portfolio" className="border-white text-white hover:bg-white/15">
-            Zobacz portfolio
+          <Button variant="outline" size="lg" href={data.ctaLink} className="border-white text-white hover:bg-white/15">
+            {data.ctaText}
           </Button>
         </motion.div>
       </div>
