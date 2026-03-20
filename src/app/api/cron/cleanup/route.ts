@@ -3,10 +3,11 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { cleanupExpiredClients } from '@/lib/cleanup'
 
-export async function POST(req: NextRequest) {
+async function handleCleanup(req: NextRequest) {
   // Verify cron secret
+  const cronSecret = process.env.CRON_SECRET
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -18,4 +19,14 @@ export async function POST(req: NextRequest) {
     ...result,
     timestamp: new Date().toISOString(),
   })
+}
+
+// POST for external cron services
+export async function POST(req: NextRequest) {
+  return handleCleanup(req)
+}
+
+// GET for Vercel Cron
+export async function GET(req: NextRequest) {
+  return handleCleanup(req)
 }

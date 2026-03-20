@@ -28,6 +28,15 @@ export const Clients: CollectionConfig = {
       },
     },
     {
+      name: 'sendCredentials',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/src/components/admin/SendCredentialsButton',
+        },
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,

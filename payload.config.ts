@@ -14,6 +14,7 @@ import { Services } from '@/collections/Services'
 import { ContactSubmissions } from '@/collections/ContactSubmissions'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { HomePage } from '@/globals/HomePage'
+import { EmailTemplates } from '@/globals/EmailTemplates'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -26,7 +27,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Clients, ClientFiles, GalleryImages, Services, ContactSubmissions],
-  globals: [SiteSettings, HomePage],
+  globals: [SiteSettings, HomePage, EmailTemplates],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'default-secret-change-me-in-production',
   typescript: {
