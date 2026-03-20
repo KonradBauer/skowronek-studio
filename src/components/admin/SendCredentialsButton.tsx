@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 
 export const SendCredentialsButton = () => {
-  const { id } = useDocumentInfo()
+  const docInfo = useDocumentInfo()
+  const id = docInfo?.id
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -86,3 +87,5 @@ export const SendCredentialsButton = () => {
     </div>
   )
 }
+
+export default SendCredentialsButton

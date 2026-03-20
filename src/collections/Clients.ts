@@ -89,20 +89,23 @@ export const Clients: CollectionConfig = {
     },
   ],
   hooks: {
-    afterDelete: [
+    beforeDelete: [
       async ({ req, id }) => {
-        // Cascade delete: remove all client files when client is deleted
+        // Cascade delete: remove all client files BEFORE deleting client
+        // (PostgreSQL FK constraint prevents deleting client while files reference it)
         let hasMore = true
         while (hasMore) {
           const files = await req.payload.find({
             collection: 'client-files',
             where: { client: { equals: id } },
             limit: 100,
+            overrideAccess: true,
           })
           for (const file of files.docs) {
             await req.payload.delete({
               collection: 'client-files',
               id: file.id,
+              overrideAccess: true,
             })
           }
           hasMore = files.hasNextPage

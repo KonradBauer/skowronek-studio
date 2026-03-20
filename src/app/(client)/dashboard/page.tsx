@@ -7,18 +7,17 @@ import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ExpirationBanner } from '@/components/client/ExpirationBanner'
-import { FileList } from '@/components/client/FileList'
+import { ClientDashboard } from '@/components/client/ClientDashboard'
 
 export default async function DashboardPage() {
   const payload = await getPayload({ config })
   const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')?.value
+  const token = cookieStore.get('client-token')?.value
 
   if (!token) {
     redirect('/login')
   }
 
-  // Verify client auth via headers
   const reqHeaders = await headers()
   const { user } = await payload.auth({
     headers: new Headers({
@@ -39,16 +38,15 @@ export default async function DashboardPage() {
     collection?: string
   }
 
-  // Only allow clients collection
   if (clientData.collection !== 'clients') {
     redirect('/login')
   }
 
-  // Fetch client files
+  // Fetch all client files
   const filesResult = await payload.find({
     collection: 'client-files',
-    where: { client: { equals: clientData.id } },
-    limit: 500,
+    where: { client: { equals: Number(clientData.id) } },
+    limit: 2000,
     sort: 'filename',
   })
 
@@ -59,10 +57,14 @@ export default async function DashboardPage() {
     displayName: doc.displayName ? String(doc.displayName) : undefined,
     mimeType: String(doc.mimeType || 'application/octet-stream'),
     filesize: Number(doc.filesize || 0),
+    category: String(doc.category || (doc.mimeType?.startsWith('video/') ? 'video' : 'photo')) as 'photo' | 'video',
   }))
 
+  const photos = files.filter((f) => f.category === 'photo')
+  const videos = files.filter((f) => f.category === 'video')
+
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 py-12">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <Link href="/">
@@ -93,8 +95,8 @@ export default async function DashboardPage() {
         <ExpirationBanner expiresAt={clientData.expiresAt} />
       </div>
 
-      {/* Files */}
-      <FileList files={files} />
+      {/* Folder-based file browser */}
+      <ClientDashboard photos={photos} videos={videos} />
     </div>
   )
 }

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { readdir, rm, stat, readFile } from 'fs/promises'
+import { readdir, rm, readFile, mkdir } from 'fs/promises'
 import { createWriteStream, createReadStream } from 'fs'
 import path from 'path'
 import { pipeline } from 'stream/promises'
-import { PassThrough } from 'stream'
 import crypto from 'crypto'
 
 // Max file size to read into Buffer for Payload (1GB)
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { uploadId, clientId, filename, mimeType } = await req.json()
+  const { uploadId, clientId, filename, mimeType, category } = await req.json()
 
   if (!uploadId || !clientId || !filename || !mimeType) {
     return NextResponse.json({ error: 'Brak wymaganych pol' }, { status: 400 })
@@ -49,35 +48,29 @@ export async function POST(req: NextRequest) {
     const baseName = path.basename(filename, ext)
     const uniqueName = `${baseName}-${crypto.randomUUID().slice(0, 8)}${ext}`
 
-    // Assemble chunks into final file via streaming (no memory limit)
-    const assembledPath = path.join(tmpDir, 'assembled')
-    const writeStream = createWriteStream(assembledPath)
+    // Assemble chunks by reading into buffers and concatenating
+    const chunkBuffers: Buffer[] = []
+    let totalSize = 0
 
     for (const chunkFile of chunkFiles) {
       const chunkPath = path.join(tmpDir, chunkFile)
-      const readStream = createReadStream(chunkPath)
-      await pipeline(readStream, new PassThrough(), writeStream, { end: false })
+      const buf = await readFile(chunkPath)
+      chunkBuffers.push(buf)
+      totalSize += buf.length
     }
-    writeStream.end()
-    await new Promise<void>((resolve, reject) => {
-      writeStream.on('finish', resolve)
-      writeStream.on('error', reject)
-    })
 
-    const fileStat = await stat(assembledPath)
-
-    if (fileStat.size <= MAX_BUFFER_SIZE) {
-      // Small/medium files: pass buffer to Payload (handles storage adapters correctly)
-      const fileBuffer = await readFile(assembledPath)
+    if (totalSize <= MAX_BUFFER_SIZE) {
+      // Small/medium files (<=1GB): pass buffer directly to Payload
+      const fileBuffer = Buffer.concat(chunkBuffers)
 
       const doc = await payload.create({
         collection: 'client-files',
-        data: { client: clientId },
+        data: { client: Number(clientId), category: category || (mimeType.startsWith('video/') ? 'video' : 'photo') },
         file: {
           data: fileBuffer,
           name: uniqueName,
           mimetype: mimeType,
-          size: fileStat.size,
+          size: totalSize,
         },
       })
 
@@ -88,32 +81,48 @@ export async function POST(req: NextRequest) {
         success: true,
         fileId: doc.id,
         filename: uniqueName,
-        size: fileStat.size,
+        size: totalSize,
       })
     }
 
-    // Large files (>1GB): move to upload dir directly, create document manually
-    const uploadDir = path.resolve('uploads', 'client-files')
-    const destPath = path.join(uploadDir, uniqueName)
+    // Large files (>1GB): write assembled file to disk first, then stream to final location
+    const assembledPath = path.join(tmpDir, 'assembled')
+    const writeStream = createWriteStream(assembledPath)
 
-    // Stream assembled file to final destination
+    for (const buf of chunkBuffers) {
+      const canContinue = writeStream.write(buf)
+      if (!canContinue) {
+        await new Promise<void>((resolve) => writeStream.once('drain', resolve))
+      }
+    }
+    // Free chunk buffers from memory
+    chunkBuffers.length = 0
+
+    await new Promise<void>((resolve, reject) => {
+      writeStream.end(() => resolve())
+      writeStream.on('error', reject)
+    })
+
+    // Move assembled file to upload dir
+    const uploadDir = path.resolve('uploads', 'client-files')
+    await mkdir(uploadDir, { recursive: true })
+    const destPath = path.join(uploadDir, uniqueName)
     await pipeline(createReadStream(assembledPath), createWriteStream(destPath))
 
     // Create Payload document with file metadata
-    // We use the REST-style approach: create doc then update with file info
     const doc = await payload.create({
       collection: 'client-files',
       data: {
         client: clientId,
         filename: uniqueName,
         mimeType: mimeType,
-        filesize: fileStat.size,
+        filesize: totalSize,
       },
       file: {
-        data: Buffer.alloc(0), // Empty buffer - file already on disk
+        data: Buffer.alloc(0),
         name: uniqueName,
         mimetype: mimeType,
-        size: fileStat.size,
+        size: totalSize,
       },
     })
 
@@ -124,7 +133,7 @@ export async function POST(req: NextRequest) {
       success: true,
       fileId: doc.id,
       filename: uniqueName,
-      size: fileStat.size,
+      size: totalSize,
     })
   } catch (err) {
     console.error('Upload completion error:', err)

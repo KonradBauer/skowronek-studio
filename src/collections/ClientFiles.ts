@@ -5,10 +5,13 @@ export const ClientFiles: CollectionConfig = {
   upload: {
     mimeTypes: ['image/*', 'video/*'],
     staticDir: 'uploads/client-files',
+    imageSizes: [
+      { name: 'thumbnail', width: 400, height: 400, position: 'centre' },
+    ],
   },
   admin: {
     useAsTitle: 'filename',
-    defaultColumns: ['filename', 'client', 'filesize', 'createdAt'],
+    defaultColumns: ['filename', 'client', 'category', 'filesize', 'createdAt'],
   },
   access: {
     read: ({ req: { user } }) => {
@@ -32,12 +35,35 @@ export const ClientFiles: CollectionConfig = {
       index: true,
     },
     {
+      name: 'category',
+      type: 'select',
+      required: true,
+      defaultValue: 'photo',
+      label: 'Kategoria',
+      index: true,
+      options: [
+        { label: 'Zdjecie', value: 'photo' },
+        { label: 'Film', value: 'video' },
+      ],
+    },
+    {
       name: 'displayName',
       type: 'text',
-      label: 'Nazwa wyświetlana',
+      label: 'Nazwa wyswietlana',
       admin: {
         description: 'Opcjonalna nazwa przyjazna dla klienta',
       },
     },
   ],
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        // Auto-set category from mimeType if not provided
+        if (data && !data.category && data.mimeType) {
+          data.category = data.mimeType.startsWith('video/') ? 'video' : 'photo'
+        }
+        return data
+      },
+    ],
+  },
 }

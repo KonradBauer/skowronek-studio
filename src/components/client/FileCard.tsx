@@ -27,9 +27,25 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
     setDownloading(true)
     try {
       const res = await fetch(`/api/client/download/${id}`)
-      if (res.ok) {
+      if (!res.ok) return
+
+      const contentType = res.headers.get('content-type') || ''
+
+      if (contentType.includes('application/json')) {
+        // S3 mode - presigned URL
         const { url } = await res.json()
         window.location.href = url
+      } else {
+        // Local mode - blob download
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = displayName || filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
       }
     } finally {
       setDownloading(false)
@@ -37,44 +53,55 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
   }
 
   return (
-    <div className="group flex items-center gap-4 border border-input-border bg-white p-4 transition-colors hover:border-primary/30">
-      {/* Icon */}
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-cream text-primary">
-        {isImage ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="m21 15-5-5L5 21" />
-          </svg>
-        ) : isVideo ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <div className="group overflow-hidden border border-input-border bg-white transition-colors hover:border-primary/30">
+      {/* Image preview */}
+      {isImage && (
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-cream">
+          <img
+            src={`/api/client/preview/${id}`}
+            alt={displayName || filename}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* Video icon area */}
+      {isVideo && (
+        <div className="flex aspect-video w-full items-center justify-center bg-cream/50">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary/40">
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
-        ) : (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
+        </div>
+      )}
+
+      {/* Info + download */}
+      <div className="flex items-center gap-4 p-4">
+        {!isImage && !isVideo && (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-cream text-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+          </div>
         )}
-      </div>
 
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-dark">
-          {displayName || filename}
-        </p>
-        <p className="text-xs text-body-muted">{formatFileSize(filesize)}</p>
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-dark">
+            {displayName || filename}
+          </p>
+          <p className="text-xs text-body-muted">{formatFileSize(filesize)}</p>
+        </div>
 
-      {/* Download */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleDownload}
-        disabled={downloading}
-      >
-        {downloading ? '...' : 'Pobierz'}
-      </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloading}
+        >
+          {downloading ? '...' : 'Pobierz'}
+        </Button>
+      </div>
     </div>
   )
 }

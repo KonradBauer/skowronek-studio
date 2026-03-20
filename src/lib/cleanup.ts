@@ -46,7 +46,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
         page++
       }
 
-      // Delete client entirely - afterDelete hook cascades to files
+      // Delete client entirely - beforeDelete hook cascades to files first
       await payload.delete({
         collection: 'clients',
         id: client.id,

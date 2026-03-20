@@ -24,6 +24,7 @@ function formatSize(bytes: number): string {
 async function uploadFile(
   file: File,
   clientId: string,
+  category: 'photo' | 'video',
   onProgress: (progress: number) => void,
 ): Promise<void> {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
@@ -81,6 +82,7 @@ async function uploadFile(
       clientId,
       filename: file.name,
       mimeType: file.type,
+      category,
     }),
   })
 
@@ -91,7 +93,8 @@ async function uploadFile(
 }
 
 export const BulkUploadPanel = () => {
-  const { id } = useDocumentInfo()
+  const docInfo = useDocumentInfo()
+  const id = docInfo?.id
   const [photos, setPhotos] = useState<FileEntry[]>([])
   const [videos, setVideos] = useState<FileEntry[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -154,7 +157,7 @@ export const BulkUploadPanel = () => {
 
       try {
         const photoSize = photo.file.size
-        await uploadFile(photo.file, String(id), (fileProgress) => {
+        await uploadFile(photo.file, String(id), 'photo', (fileProgress) => {
           const currentFileUploaded = (fileProgress / 100) * photoSize
           const totalProgress =
             totalPhotoBytes > 0
@@ -193,7 +196,7 @@ export const BulkUploadPanel = () => {
       )
 
       try {
-        await uploadFile(video.file, String(id), (progress) => {
+        await uploadFile(video.file, String(id), 'video', (progress) => {
           setVideos((prev) =>
             prev.map((v, idx) => (idx === i ? { ...v, progress } : v)),
           )
@@ -336,7 +339,7 @@ export const BulkUploadPanel = () => {
                 <span style={styles.fileSize}>{formatSize(photo.file.size)}</span>
                 {photo.status === 'done' && <span style={styles.statusDone}>OK</span>}
                 {photo.status === 'error' && (
-                  <span style={styles.statusError} title={photo.error}>Blad</span>
+                  <span style={styles.statusError}>{photo.error || 'Blad'}</span>
                 )}
                 {photo.status === 'pending' && !isUploading && (
                   <button type="button" onClick={() => removePhoto(i)} style={styles.removeBtn}>x</button>
@@ -373,7 +376,7 @@ export const BulkUploadPanel = () => {
                 <span style={styles.fileSize}>{formatSize(video.file.size)}</span>
                 {video.status === 'done' && <span style={styles.statusDone}>OK</span>}
                 {video.status === 'error' && (
-                  <span style={styles.statusError} title={video.error}>Blad</span>
+                  <span style={styles.statusError}>{video.error || 'Blad'}</span>
                 )}
                 {video.status === 'pending' && !isUploading && (
                   <button type="button" onClick={() => removeVideo(i)} style={styles.removeBtn}>x</button>
@@ -597,3 +600,5 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'opacity 0.2s',
   },
 }
+
+export default BulkUploadPanel
