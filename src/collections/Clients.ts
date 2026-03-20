@@ -1,5 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
+const DEFAULT_EXPIRY_DAYS = 21
+
+function getDefaultExpiryDate(): string {
+  const date = new Date()
+  date.setDate(date.getDate() + DEFAULT_EXPIRY_DAYS)
+  return date.toISOString()
+}
+
 export const Clients: CollectionConfig = {
   slug: 'clients',
   auth: true,
@@ -37,6 +45,15 @@ export const Clients: CollectionConfig = {
       },
     },
     {
+      name: 'bulkUpload',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/src/components/admin/BulkUploadPanel',
+        },
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
@@ -55,11 +72,13 @@ export const Clients: CollectionConfig = {
       type: 'date',
       required: true,
       label: 'Data wygaśnięcia',
+      defaultValue: getDefaultExpiryDate,
       admin: {
         date: {
           pickerAppearance: 'dayOnly',
           displayFormat: 'dd.MM.yyyy',
         },
+        description: `Domyslnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto i pliki zostana automatycznie usuniete.`,
       },
     },
     {
@@ -73,16 +92,20 @@ export const Clients: CollectionConfig = {
     afterDelete: [
       async ({ req, id }) => {
         // Cascade delete: remove all client files when client is deleted
-        const files = await req.payload.find({
-          collection: 'client-files',
-          where: { client: { equals: id } },
-          limit: 1000,
-        })
-        for (const file of files.docs) {
-          await req.payload.delete({
+        let hasMore = true
+        while (hasMore) {
+          const files = await req.payload.find({
             collection: 'client-files',
-            id: file.id,
+            where: { client: { equals: id } },
+            limit: 100,
           })
+          for (const file of files.docs) {
+            await req.payload.delete({
+              collection: 'client-files',
+              id: file.id,
+            })
+          }
+          hasMore = files.hasNextPage
         }
       },
     ],

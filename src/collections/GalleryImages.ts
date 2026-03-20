@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 export const GalleryImages: CollectionConfig = {
   slug: 'gallery-images',
   upload: {
+    staticDir: 'uploads/gallery',
     mimeTypes: ['image/*'],
     imageSizes: [
       { name: 'thumbnail', width: 400, height: 300, position: 'centre' },

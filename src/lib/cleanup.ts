@@ -31,26 +31,25 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
 
   for (const client of expiredClients.docs) {
     try {
-      // Find and delete client files (S3 cleanup happens via Payload's storage adapter)
-      const files = await payload.find({
-        collection: 'client-files',
-        where: { client: { equals: client.id } },
-        limit: 1000,
-      })
-
-      for (const file of files.docs) {
-        await payload.delete({
+      // Count files before deletion (for reporting)
+      let page = 1
+      let hasMore = true
+      while (hasMore) {
+        const files = await payload.find({
           collection: 'client-files',
-          id: file.id,
+          where: { client: { equals: client.id } },
+          limit: 100,
+          page,
         })
-        result.filesRemoved++
+        result.filesRemoved += files.docs.length
+        hasMore = files.hasNextPage
+        page++
       }
 
-      // Deactivate client
-      await payload.update({
+      // Delete client entirely - afterDelete hook cascades to files
+      await payload.delete({
         collection: 'clients',
         id: client.id,
-        data: { isActive: false },
       })
 
       result.deleted++

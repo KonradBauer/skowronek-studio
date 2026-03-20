@@ -4,6 +4,7 @@ export const ClientFiles: CollectionConfig = {
   slug: 'client-files',
   upload: {
     mimeTypes: ['image/*', 'video/*'],
+    staticDir: 'uploads/client-files',
   },
   admin: {
     useAsTitle: 'filename',
