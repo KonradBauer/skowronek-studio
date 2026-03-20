@@ -6,7 +6,7 @@ import { AnimatedSection } from '@/components/animations/AnimatedSection'
 
 export function VoucherSection() {
   return (
-    <section className="relative overflow-hidden">
+    <section id="voucher" className="relative overflow-hidden">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
