@@ -2,6 +2,10 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
+import dynamic from 'next/dynamic'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayer = dynamic(() => import('react-player') as any, { ssr: false }) as any
 
 const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -107,6 +111,7 @@ export const BulkUploadPanel = () => {
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([])
   const [loadingFiles, setLoadingFiles] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [playingVideoId, setPlayingVideoId] = useState<number | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -341,22 +346,51 @@ export const BulkUploadPanel = () => {
                   Filmy ({existingVideos.length}) - {formatSize(existingVideos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
               </div>
-              <div style={styles.fileList}>
-                {existingVideos.map((file) => (
-                  <div key={file.id} style={styles.fileItem}>
-                    <span style={{ ...styles.fileName, color: '#826D4C' }}>&#9654;</span>
-                    <span style={styles.fileName}>{file.filename}</span>
-                    <span style={styles.fileSize}>{formatSize(file.filesize)}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteFile(file.id)}
-                      disabled={deletingId === file.id}
-                      style={styles.deleteBtn}
-                    >
-                      {deletingId === file.id ? '...' : 'x'}
-                    </button>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {existingVideos.map((file) => {
+                  const isPlaying = playingVideoId === file.id
+                  return (
+                    <div key={file.id} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', overflow: 'hidden' }}>
+                      {isPlaying && (
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
+                          <ReactPlayer
+                            url={`/api/client-files/file/${file.filename}`}
+                            width="100%"
+                            height="100%"
+                            controls
+                            playing
+                          />
+                        </div>
+                      )}
+                      <div style={styles.fileItem}>
+                        <button
+                          type="button"
+                          onClick={() => setPlayingVideoId(isPlaying ? null : file.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#826D4C',
+                            fontSize: '16px',
+                            padding: '2px 4px',
+                          }}
+                        >
+                          {isPlaying ? '\u23F8' : '\u25B6'}
+                        </button>
+                        <span style={styles.fileName}>{file.filename}</span>
+                        <span style={styles.fileSize}>{formatSize(file.filesize)}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFile(file.id)}
+                          disabled={deletingId === file.id}
+                          style={styles.deleteBtn}
+                        >
+                          {deletingId === file.id ? '...' : 'x'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

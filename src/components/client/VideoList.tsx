@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReactPlayer = dynamic(() => import('react-player') as any, { ssr: false }) as any
 
 interface FileData {
   id: string
@@ -25,6 +29,7 @@ function formatSize(bytes: number): string {
 export function VideoList({ videos }: VideoListProps) {
   const [downloadingAll, setDownloadingAll] = useState(false)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [playingId, setPlayingId] = useState<string | null>(null)
   const totalSize = videos.reduce((s, f) => s + f.filesize, 0)
 
   async function handleDownloadSingle(file: FileData) {
@@ -95,37 +100,75 @@ export function VideoList({ videos }: VideoListProps) {
       </div>
 
       {/* Video list */}
-      <div className="space-y-3">
-        {videos.map((video) => (
-          <div
-            key={video.id}
-            className="flex items-center gap-4 border border-input-border bg-white p-5 transition-colors hover:border-primary/30"
-          >
-            {/* Icon */}
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-cream text-primary">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            </div>
+      <div className="space-y-4">
+        {videos.map((video) => {
+          const isPlaying = playingId === video.id
 
-            {/* Info */}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-dark">
-                {video.displayName || video.filename}
-              </p>
-              <p className="text-xs text-body-muted">{formatSize(video.filesize)}</p>
-            </div>
-
-            {/* Download */}
-            <Button
-              variant="outline"
-              onClick={() => handleDownloadSingle(video)}
-              disabled={downloadingId === video.id}
+          return (
+            <div
+              key={video.id}
+              className="overflow-hidden border border-input-border bg-white transition-colors hover:border-primary/30"
             >
-              {downloadingId === video.id ? 'Pobieranie...' : 'Pobierz'}
-            </Button>
-          </div>
-        ))}
+              {/* Player */}
+              {isPlaying && (
+                <div className="relative aspect-video w-full bg-black">
+                  <ReactPlayer
+                    url={`/api/client/preview/${video.id}`}
+                    width="100%"
+                    height="100%"
+                    controls
+                    playing
+                    config={{
+                      file: {
+                        attributes: {
+                          controlsList: 'nodownload',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Info bar */}
+              <div className="flex items-center gap-4 p-5">
+                {/* Play/Stop toggle */}
+                <button
+                  type="button"
+                  onClick={() => setPlayingId(isPlaying ? null : video.id)}
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-cream text-primary transition-colors hover:bg-primary hover:text-white"
+                >
+                  {isPlaying ? (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  ) : (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-dark">
+                    {video.displayName || video.filename}
+                  </p>
+                  <p className="text-xs text-body-muted">{formatSize(video.filesize)}</p>
+                </div>
+
+                {/* Download */}
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadSingle(video)}
+                  disabled={downloadingId === video.id}
+                >
+                  {downloadingId === video.id ? 'Pobieranie...' : 'Pobierz'}
+                </Button>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

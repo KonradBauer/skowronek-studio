@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import path from 'path'
-import { access } from 'fs/promises'
+import { access, stat } from 'fs/promises'
 import { createReadStream } from 'fs'
 import { Readable } from 'stream'
 
@@ -53,11 +53,14 @@ export async function GET(
 
   const filename = String(fileDoc.filename || '')
   const mimeType = String(fileDoc.mimeType || 'application/octet-stream')
+  const isImage = mimeType.startsWith('image/')
+  const isVideo = mimeType.startsWith('video/')
 
-  if (!mimeType.startsWith('image/')) {
-    return NextResponse.json({ error: 'Not an image' }, { status: 400 })
+  if (!isImage && !isVideo) {
+    return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
   }
 
+  // S3 mode - redirect to presigned URL
   if (process.env.S3_BUCKET) {
     const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
     const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
@@ -80,36 +83,89 @@ export async function GET(
     return NextResponse.redirect(url)
   }
 
-  // Local mode - try thumbnail first (faster for grid), fallback to full image
-  const wantsThumbnail = req.nextUrl.searchParams.get('size') === 'thumbnail'
-  const ext = path.extname(filename)
-  const base = path.basename(filename, ext)
-  const thumbnailName = `${base}-400x400${ext}`
-  const thumbnailPath = path.resolve('uploads', 'client-files', thumbnailName)
+  // Local mode
   const fullPath = path.resolve('uploads', 'client-files', filename)
 
-  let filePath = fullPath
-  if (wantsThumbnail) {
-    try {
-      await access(thumbnailPath)
-      filePath = thumbnailPath
-    } catch {
-      // Thumbnail doesn't exist, serve full image
+  // For images, try thumbnail first
+  if (isImage) {
+    const wantsThumbnail = req.nextUrl.searchParams.get('size') === 'thumbnail'
+    const ext = path.extname(filename)
+    const base = path.basename(filename, ext)
+    const thumbnailName = `${base}-400x400${ext}`
+    const thumbnailPath = path.resolve('uploads', 'client-files', thumbnailName)
+
+    let filePath = fullPath
+    if (wantsThumbnail) {
+      try {
+        await access(thumbnailPath)
+        filePath = thumbnailPath
+      } catch {
+        // Thumbnail doesn't exist, serve full image
+      }
     }
+
+    try {
+      await access(filePath)
+    } catch {
+      return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
+    }
+
+    const nodeStream = createReadStream(filePath)
+    const webStream = Readable.toWeb(nodeStream) as ReadableStream
+
+    return new NextResponse(webStream, {
+      headers: {
+        'Content-Type': mimeType,
+        'Cache-Control': 'private, max-age=86400',
+      },
+    })
   }
 
+  // Video streaming with range request support
   try {
-    await access(filePath)
+    await access(fullPath)
   } catch {
     return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
   }
 
-  const nodeStream = createReadStream(filePath)
+  const fileStat = await stat(fullPath)
+  const fileSize = fileStat.size
+  const rangeHeader = req.headers.get('range')
+
+  if (rangeHeader) {
+    const match = rangeHeader.match(/bytes=(\d+)-(\d*)/)
+    if (!match) {
+      return new NextResponse(null, { status: 416, headers: { 'Content-Range': `bytes */${fileSize}` } })
+    }
+
+    const start = parseInt(match[1], 10)
+    const end = match[2] ? parseInt(match[2], 10) : Math.min(start + 5 * 1024 * 1024 - 1, fileSize - 1) // 5MB chunks
+    const chunkSize = end - start + 1
+
+    const nodeStream = createReadStream(fullPath, { start, end })
+    const webStream = Readable.toWeb(nodeStream) as ReadableStream
+
+    return new NextResponse(webStream, {
+      status: 206,
+      headers: {
+        'Content-Type': mimeType,
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Content-Length': String(chunkSize),
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'private, max-age=86400',
+      },
+    })
+  }
+
+  // No range - return full file with Accept-Ranges header
+  const nodeStream = createReadStream(fullPath)
   const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
   return new NextResponse(webStream, {
     headers: {
       'Content-Type': mimeType,
+      'Content-Length': String(fileSize),
+      'Accept-Ranges': 'bytes',
       'Cache-Control': 'private, max-age=86400',
     },
   })
