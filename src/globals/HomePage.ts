@@ -6,6 +6,7 @@ function mediaField(label: string): Field {
     type: 'relationship',
     relationTo: 'media',
     label,
+    admin: { appearance: 'drawer' },
   }
 }
 
@@ -17,6 +18,7 @@ function mediaFieldMany(label: string, maxRows: number): Field {
     hasMany: true,
     maxRows,
     label,
+    admin: { appearance: 'drawer' },
   }
 }
 

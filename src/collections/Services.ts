@@ -39,6 +39,7 @@ export const Services: CollectionConfig = {
       type: 'relationship',
       relationTo: 'media',
       label: 'Zdjecie',
+      admin: { appearance: 'drawer' },
     },
     {
       name: 'order',
