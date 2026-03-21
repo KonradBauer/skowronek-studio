@@ -1,4 +1,24 @@
-import type { GlobalConfig } from 'payload'
+import type { GlobalConfig, Field } from 'payload'
+
+function mediaField(label: string): Field {
+  return {
+    name: 'image',
+    type: 'relationship',
+    relationTo: 'media',
+    label,
+  }
+}
+
+function mediaFieldMany(label: string, maxRows: number): Field {
+  return {
+    name: 'images',
+    type: 'relationship',
+    relationTo: 'media',
+    hasMany: true,
+    maxRows,
+    label,
+  }
+}
 
 export const HomePage: GlobalConfig = {
   slug: 'home-page',
@@ -14,21 +34,7 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Hero',
       fields: [
-        {
-          name: 'images',
-          type: 'array',
-          label: 'Zdjecia hero',
-          minRows: 1,
-          maxRows: 6,
-          fields: [
-            {
-              name: 'image',
-              type: 'upload',
-              relationTo: 'gallery-images',
-              required: true,
-            },
-          ],
-        },
+        mediaFieldMany('Zdjecia hero (max 6)', 6),
         { name: 'title', type: 'text', defaultValue: 'Skowronek Studio', label: 'Tytul' },
         { name: 'subtitle', type: 'text', defaultValue: 'Fotografia z pasja', label: 'Podtytul' },
         { name: 'ctaText', type: 'text', defaultValue: 'Zobacz portfolio', label: 'Tekst CTA' },
@@ -52,7 +58,7 @@ export const HomePage: GlobalConfig = {
             { name: 'text', type: 'textarea', required: true, label: 'Tekst akapitu' },
           ],
         },
-        { name: 'image', type: 'upload', relationTo: 'gallery-images', label: 'Zdjecie' },
+        mediaField('Zdjecie'),
       ],
     },
     // ── Portfolio / Realizacje ────────────────────
@@ -63,22 +69,7 @@ export const HomePage: GlobalConfig = {
       fields: [
         { name: 'title', type: 'text', defaultValue: 'Portfolio', label: 'Tytul' },
         { name: 'subtitle', type: 'text', defaultValue: 'Nasze realizacje', label: 'Podtytul' },
-        {
-          name: 'images',
-          type: 'array',
-          label: 'Zdjecia realizacji',
-          maxRows: 12,
-          fields: [
-            {
-              name: 'image',
-              type: 'upload',
-              relationTo: 'gallery-images',
-              required: true,
-            },
-            { name: 'title', type: 'text', label: 'Tytul zdjecia' },
-            { name: 'category', type: 'text', label: 'Kategoria (np. Wesela, Portrety)' },
-          ],
-        },
+        mediaFieldMany('Zdjecia realizacji', 12),
       ],
     },
     // ── Oferta ────────────────────────────────────
@@ -102,7 +93,7 @@ export const HomePage: GlobalConfig = {
         { name: 'description', type: 'textarea', defaultValue: 'Szukasz idealnego prezentu? Voucher na sesje fotograficzna to piekny i osobisty upominek na kazda okazje - urodziny, rocznice, Dzien Matki czy swieta.', label: 'Opis' },
         { name: 'ctaText', type: 'text', defaultValue: 'Zamow voucher', label: 'Tekst CTA' },
         { name: 'ctaLink', type: 'text', defaultValue: '#contact', label: 'Link CTA' },
-        { name: 'image', type: 'upload', relationTo: 'gallery-images', label: 'Zdjecie tla' },
+        mediaField('Zdjecie tla'),
       ],
     },
     // ── Kontakt ───────────────────────────────────

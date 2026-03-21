@@ -36,9 +36,9 @@ export const Services: CollectionConfig = {
     },
     {
       name: 'image',
-      type: 'upload',
-      relationTo: 'gallery-images',
-      label: 'Zdjęcie',
+      type: 'relationship',
+      relationTo: 'media',
+      label: 'Zdjecie',
     },
     {
       name: 'order',

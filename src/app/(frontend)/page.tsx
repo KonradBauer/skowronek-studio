@@ -50,9 +50,9 @@ export default async function HomePage() {
     // Fallback to defaults when DB schema is not yet migrated
   }
 
-  // Hero data
+  // Hero data — images is now a hasMany relationship (array of media objects or IDs)
   const heroImages = (homePage.hero?.images || [])
-    .map((item: { image?: unknown }) => getImageUrl(item.image))
+    .map((item: unknown) => getImageUrl(item))
     .filter(Boolean)
   const heroData = {
     images: heroImages.length > 0 ? heroImages : ['/images/hero-1.jpg', '/images/hero-2.jpg', '/images/hero-3.jpg', '/images/hero-4.jpg'],
@@ -71,13 +71,12 @@ export default async function HomePage() {
     imageUrl: getImageUrl(homePage.about?.image),
   }
 
-  // Portfolio data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const portfolioItems = (homePage.portfolio?.images || []).map((item: any, i: number) => ({
+  // Portfolio data — images is now a hasMany relationship (flat array of media objects)
+  const portfolioItems = (homePage.portfolio?.images || []).map((item: unknown, i: number) => ({
     id: i + 1,
-    title: item.title || '',
-    category: item.category || '',
-    image: getImageSize(item.image, 'card') || `/images/portfolio-${i + 1}.jpg`,
+    title: (item && typeof item === 'object' && 'alt' in item ? (item as { alt?: string }).alt : '') || '',
+    category: '',
+    image: getImageSize(item, 'card') || `/images/portfolio-${i + 1}.jpg`,
   }))
   const portfolioData = {
     title: homePage.portfolio?.title || 'Portfolio',

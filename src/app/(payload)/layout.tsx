@@ -1,7 +1,7 @@
 /* THIS FILE WAS GENERATED AUTOMATICALLY BY PAYLOAD. */
 /* DO NOT MODIFY IT BECAUSE IT COULD BE REWRITTEN AT ANY TIME. */
 import config from '@payload-config'
-import { RootLayout } from '@payloadcms/next/layouts'
+import { handleServerFunctions, RootLayout } from '@payloadcms/next/layouts'
 import React from 'react'
 import { importMap } from './admin/importMap'
 
@@ -12,9 +12,13 @@ type Args = {
 }
 
 const Layout = ({ children }: Args) => (
-  <RootLayout config={config} importMap={importMap} serverFunction={async () => {
+  <RootLayout config={config} importMap={importMap} serverFunction={async function(args: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     'use server'
-    return null
+    return handleServerFunctions({
+      ...args,
+      config,
+      importMap,
+    })
   }}>
     {children}
   </RootLayout>

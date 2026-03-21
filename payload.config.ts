@@ -12,6 +12,7 @@ import { ClientFiles } from '@/collections/ClientFiles'
 import { GalleryImages } from '@/collections/GalleryImages'
 import { Services } from '@/collections/Services'
 import { ContactSubmissions } from '@/collections/ContactSubmissions'
+import { Media } from '@/collections/Media'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { HomePage } from '@/globals/HomePage'
 import { EmailTemplates } from '@/globals/EmailTemplates'
@@ -26,7 +27,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Clients, ClientFiles, GalleryImages, Services, ContactSubmissions],
+  collections: [Users, Clients, ClientFiles, GalleryImages, Media, Services, ContactSubmissions],
   globals: [SiteSettings, HomePage, EmailTemplates],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'default-secret-change-me-in-production',
@@ -49,6 +50,9 @@ export default buildConfig({
               },
               'gallery-images': {
                 prefix: 'gallery',
+              },
+              media: {
+                prefix: 'media',
               },
             },
             bucket: process.env.S3_BUCKET,

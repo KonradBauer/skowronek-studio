@@ -21,12 +21,6 @@ export const SiteSettings: GlobalConfig = {
       label: 'Tagline',
     },
     {
-      name: 'logo',
-      type: 'upload',
-      relationTo: 'gallery-images',
-      label: 'Logo',
-    },
-    {
       name: 'contact',
       type: 'group',
       label: 'Dane kontaktowe',

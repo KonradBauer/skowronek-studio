@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
-      <body className="min-h-screen bg-cream antialiased">
+      <body className="frontend min-h-screen bg-cream antialiased">
         {children}
       </body>
     </html>
