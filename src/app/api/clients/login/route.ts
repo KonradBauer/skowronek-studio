@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+function isSecureRequest(req: NextRequest): boolean {
+  if (req.nextUrl.protocol === 'https:') return true
+  if (req.headers.get('x-forwarded-proto') === 'https') return true
+  return false
+}
+
 export async function POST(req: NextRequest) {
   const payload = await getPayload({ config })
 
@@ -24,15 +30,21 @@ export async function POST(req: NextRequest) {
       data: { email, password },
     })
 
-    // Set auth cookie
+    if (!result.token) {
+      return NextResponse.json(
+        { error: 'Blad serwera - brak tokenu' },
+        { status: 500 },
+      )
+    }
+
     const response = NextResponse.json({
       user: result.user,
       token: result.token,
     })
 
-    response.cookies.set('client-token', result.token!, {
+    response.cookies.set('client-token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecureRequest(req),
       path: '/',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days

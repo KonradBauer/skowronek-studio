@@ -30,7 +30,8 @@ export default function LoginPage() {
       })
 
       if (res.ok) {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
+        return
       } else {
         setError('Nieprawidłowy email lub hasło')
       }
