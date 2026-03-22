@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 interface FileData {
@@ -95,11 +96,12 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
             onClick={() => setLightboxId(photo.id)}
             className="group relative aspect-square overflow-hidden bg-cream"
           >
-            <img
+            <Image
               src={`/api/client/preview/${photo.id}?size=thumbnail`}
               alt={photo.displayName || photo.filename}
-              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-              loading="lazy"
+              fill
+              className="object-cover transition-transform duration-200 group-hover:scale-105"
+              unoptimized
             />
             <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
           </button>
@@ -147,11 +149,14 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
           )}
 
           {/* Image */}
-          <img
+          <Image
             src={`/api/client/preview/${lightboxPhoto.id}`}
             alt={lightboxPhoto.displayName || lightboxPhoto.filename}
+            width={1200}
+            height={800}
             className="max-h-[90vh] max-w-[90vw] object-contain"
             onClick={(e) => e.stopPropagation()}
+            unoptimized
           />
 
           {/* Info bar */}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 interface FileCardProps {
@@ -57,11 +58,12 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
       {/* Image preview */}
       {isImage && (
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-cream">
-          <img
+          <Image
             src={`/api/client/preview/${id}`}
             alt={displayName || filename}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       )}

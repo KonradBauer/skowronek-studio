@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,11 +317,12 @@ export const BulkUploadPanel = () => {
               <div style={styles.existingGrid}>
                 {existingPhotos.map((file) => (
                   <div key={file.id} style={styles.existingTile}>
-                    <img
+                    <Image
                       src={`/api/client-files/file/${file.filename}`}
                       alt={file.filename}
-                      style={styles.existingThumb}
-                      loading="lazy"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      sizes="150px"
                     />
                     <div style={styles.existingOverlay}>
                       <span style={styles.existingName}>{file.filename}</span>

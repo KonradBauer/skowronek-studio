@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Section } from '@/components/ui/Section'
 import { Heading } from '@/components/ui/Heading'
@@ -39,10 +40,13 @@ function ReviewCard({ review }: { review: GoogleReview }) {
       <div className="mt-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {review.profilePhoto && (
-            <img
+            <Image
               src={review.profilePhoto}
               alt=""
+              width={32}
+              height={32}
               className="h-8 w-8 rounded-full object-cover"
+              unoptimized
             />
           )}
           <p className="text-sm font-medium text-dark">{review.author}</p>
