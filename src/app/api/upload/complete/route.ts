@@ -7,7 +7,6 @@ import path from 'path'
 import { pipeline } from 'stream/promises'
 import crypto from 'crypto'
 import { generateVideoThumbnailForDoc } from '@/lib/video-thumbnail'
-import { generateClientZip } from '@/lib/zip-generator'
 import { transcodeToHLS } from '@/lib/hls-transcoder'
 
 // Max file size to read into Buffer for Payload (1GB)
@@ -85,8 +84,7 @@ export async function POST(req: NextRequest) {
         generateVideoThumbnailForDoc(doc.id, uniqueName).catch(console.error)
         transcodeToHLS(doc.id, uniqueName).catch(console.error)
       }
-      const fileCategory = category || (mimeType.startsWith('video/') ? 'video' : 'photo')
-      generateClientZip(Number(clientId), fileCategory).catch(console.error)
+      // ZIP generation is triggered by the frontend after all uploads finish
 
       return NextResponse.json({
         success: true,

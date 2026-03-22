@@ -3,7 +3,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 
-const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB
+const CHUNK_SIZE_PHOTO = 10 * 1024 * 1024 // 10MB for photos
+const CHUNK_SIZE_VIDEO = 25 * 1024 * 1024 // 25MB for videos
+const MAX_CONCURRENT_FILES = 5
+const MAX_CONCURRENT_CHUNKS = 3
 
 type UploadStatus = 'pending' | 'uploading' | 'done' | 'error'
 
@@ -45,7 +48,8 @@ async function uploadFile(
   category: 'photo' | 'video',
   onProgress: (progress: number, bytesUploaded: number) => void,
 ): Promise<void> {
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
+  const chunkSize = category === 'video' ? CHUNK_SIZE_VIDEO : CHUNK_SIZE_PHOTO
+  const totalChunks = Math.ceil(file.size / chunkSize)
 
   const initRes = await fetch('/api/upload/init', {
     method: 'POST',
@@ -66,29 +70,43 @@ async function uploadFile(
 
   const { uploadId } = await initRes.json()
 
-  for (let i = 0; i < totalChunks; i++) {
-    const start = i * CHUNK_SIZE
-    const end = Math.min(start + CHUNK_SIZE, file.size)
-    const chunk = file.slice(start, end)
+  // Upload chunks concurrently with a pool of MAX_CONCURRENT_CHUNKS
+  const chunksDone = new Set<number>()
+  let nextChunk = 0
 
-    const formData = new FormData()
-    formData.append('uploadId', uploadId)
-    formData.append('chunkIndex', String(i))
-    formData.append('chunk', chunk)
+  const uploadChunk = async (): Promise<void> => {
+    while (nextChunk < totalChunks) {
+      const i = nextChunk++
+      const start = i * chunkSize
+      const end = Math.min(start + chunkSize, file.size)
+      const chunk = file.slice(start, end)
 
-    const chunkRes = await fetch('/api/upload/chunk', {
-      method: 'POST',
-      body: formData,
-    })
+      const formData = new FormData()
+      formData.append('uploadId', uploadId)
+      formData.append('chunkIndex', String(i))
+      formData.append('chunk', chunk)
 
-    if (!chunkRes.ok) {
-      const err = await chunkRes.json()
-      throw new Error(err.error || `Blad wysylania chunka ${i}`)
+      const chunkRes = await fetch('/api/upload/chunk', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!chunkRes.ok) {
+        const err = await chunkRes.json()
+        throw new Error(err.error || `Blad wysylania chunka ${i}`)
+      }
+
+      chunksDone.add(i)
+      const bytesUploaded = Math.min(chunksDone.size * chunkSize, file.size)
+      onProgress((chunksDone.size / totalChunks) * 100, bytesUploaded)
     }
-
-    const bytesUploaded = Math.min((i + 1) * CHUNK_SIZE, file.size)
-    onProgress(((i + 1) / totalChunks) * 100, bytesUploaded)
   }
+
+  const workers = Array.from(
+    { length: Math.min(MAX_CONCURRENT_CHUNKS, totalChunks) },
+    () => uploadChunk(),
+  )
+  await Promise.all(workers)
 
   const completeRes = await fetch('/api/upload/complete', {
     method: 'POST',
@@ -120,7 +138,9 @@ export const BulkUploadPanel = () => {
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([])
   const [loadingFiles, setLoadingFiles] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [playingVideoId, setPlayingVideoId] = useState<number | null>(null)
+  const [visiblePhotoCount, setVisiblePhotoCount] = useState(0)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -152,6 +172,21 @@ export const BulkUploadPanel = () => {
   useEffect(() => {
     fetchExistingFiles()
   }, [fetchExistingFiles])
+
+  const handleDeleteAll = async () => {
+    if (!confirm(`Usunac WSZYSTKIE pliki tego klienta? (${existingFiles.length} plikow)`)) return
+    setIsDeletingAll(true)
+    try {
+      for (const file of existingFiles) {
+        await fetch(`/api/client-files/${file.id}`, { method: 'DELETE' })
+      }
+      setExistingFiles([])
+    } catch {
+      // refresh to show what's left
+      fetchExistingFiles()
+    }
+    setIsDeletingAll(false)
+  }
 
   const handleDeleteFile = async (fileId: number) => {
     if (!confirm('Usunac ten plik?')) return
@@ -219,8 +254,8 @@ export const BulkUploadPanel = () => {
     const filesTotal = allFiles.length
     uploadStartTimeRef.current = Date.now()
 
-    const updateStats = (currentFileBytes: number) => {
-      const totalUploaded = completedBytes + currentFileBytes
+    const updateStats = (currentFilesBytes: number) => {
+      const totalUploaded = completedBytes + currentFilesBytes
       const elapsed = (Date.now() - uploadStartTimeRef.current) / 1000
       const speed = elapsed > 0 ? totalUploaded / elapsed : 0
       const remaining = totalBytes - totalUploaded
@@ -229,74 +264,88 @@ export const BulkUploadPanel = () => {
       setUploadStats({ speed, eta, totalBytesUploaded: totalUploaded, totalBytes, filesDone, filesTotal })
     }
 
+    // Track per-file in-progress bytes for concurrent uploads
+    const inProgressBytes = new Map<string, number>()
+
+    const recalcInProgress = () => {
+      let sum = 0
+      for (const v of inProgressBytes.values()) sum += v
+      return sum
+    }
+
+    // Build unified queue: photos first, then videos
+    type QueueItem = { idx: number; category: 'photo' | 'video'; file: File }
+    const queue: QueueItem[] = []
+
     for (let i = 0; i < photos.length; i++) {
-      const photo = photos[i]
-      if (photo.status === 'done') continue
-
-      setPhotos((prev) =>
-        prev.map((p, idx) => (idx === i ? { ...p, status: 'uploading', startTime: Date.now() } : p)),
-      )
-
-      try {
-        await uploadFile(photo.file, String(id), 'photo', (progress, bytesUploaded) => {
-          setPhotos((prev) =>
-            prev.map((p, idx) => (idx === i ? { ...p, progress, bytesUploaded } : p)),
-          )
-          updateStats(bytesUploaded)
-        })
-
-        completedBytes += photo.file.size
-        filesDone++
-        setPhotos((prev) =>
-          prev.map((p, idx) => (idx === i ? { ...p, status: 'done', progress: 100, bytesUploaded: photo.file.size } : p)),
-        )
-        updateStats(0)
-      } catch (err) {
-        setPhotos((prev) =>
-          prev.map((p, idx) =>
-            idx === i
-              ? { ...p, status: 'error', error: err instanceof Error ? err.message : 'Blad' }
-              : p,
-          ),
-        )
-      }
+      if (photos[i].status !== 'done') queue.push({ idx: i, category: 'photo', file: photos[i].file })
     }
-
     for (let i = 0; i < videos.length; i++) {
-      const video = videos[i]
-      if (video.status === 'done') continue
+      if (videos[i].status !== 'done') queue.push({ idx: i, category: 'video', file: videos[i].file })
+    }
 
-      setVideos((prev) =>
-        prev.map((v, idx) => (idx === i ? { ...v, status: 'uploading', startTime: Date.now() } : v)),
-      )
+    let nextIndex = 0
 
-      try {
-        await uploadFile(video.file, String(id), 'video', (progress, bytesUploaded) => {
-          setVideos((prev) =>
-            prev.map((v, idx) => (idx === i ? { ...v, progress, bytesUploaded } : v)),
+    const worker = async (): Promise<void> => {
+      while (nextIndex < queue.length) {
+        const item = queue[nextIndex++]
+        const key = `${item.category}-${item.idx}`
+        const setFiles = item.category === 'photo' ? setPhotos : setVideos
+
+        setFiles((prev) =>
+          prev.map((f, idx) => (idx === item.idx ? { ...f, status: 'uploading', startTime: Date.now() } : f)),
+        )
+
+        inProgressBytes.set(key, 0)
+
+        try {
+          await uploadFile(item.file, String(id), item.category, (progress, bytesUploaded) => {
+            setFiles((prev) =>
+              prev.map((f, idx) => (idx === item.idx ? { ...f, progress, bytesUploaded } : f)),
+            )
+            inProgressBytes.set(key, bytesUploaded)
+            updateStats(recalcInProgress())
+          })
+
+          completedBytes += item.file.size
+          filesDone++
+          inProgressBytes.delete(key)
+
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === item.idx ? { ...f, status: 'done', progress: 100, bytesUploaded: item.file.size } : f,
+            ),
           )
-          updateStats(bytesUploaded)
-        })
-
-        completedBytes += video.file.size
-        filesDone++
-        setVideos((prev) =>
-          prev.map((v, idx) => (idx === i ? { ...v, status: 'done', progress: 100, bytesUploaded: video.file.size } : v)),
-        )
-        updateStats(0)
-      } catch (err) {
-        setVideos((prev) =>
-          prev.map((v, idx) =>
-            idx === i
-              ? { ...v, status: 'error', error: err instanceof Error ? err.message : 'Blad' }
-              : v,
-          ),
-        )
+          updateStats(recalcInProgress())
+        } catch (err) {
+          inProgressBytes.delete(key)
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === item.idx
+                ? { ...f, status: 'error', error: err instanceof Error ? err.message : 'Blad' }
+                : f,
+            ),
+          )
+        }
       }
     }
+
+    // Launch concurrent file upload workers
+    const workers = Array.from(
+      { length: Math.min(MAX_CONCURRENT_FILES, queue.length) },
+      () => worker(),
+    )
+    await Promise.all(workers)
 
     setIsUploading(false)
     fetchExistingFiles()
+
+    // Trigger ZIP pre-generation once after all uploads finish
+    fetch('/api/generate-zip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: id }),
+    }).catch(console.error)
   }
 
   if (!id) {
@@ -311,11 +360,9 @@ export const BulkUploadPanel = () => {
   const existingVideos = existingFiles.filter((f) => f.category === 'video')
 
   const photosProgress =
-    photos.length > 0 && photos.some((p) => p.status === 'uploading')
-      ? photos.find((p) => p.status === 'uploading')?.progress || 0
-      : photos.every((p) => p.status === 'done') && photos.length > 0
-        ? 100
-        : 0
+    photos.length > 0
+      ? (photos.reduce((sum, p) => sum + (p.status === 'done' ? 100 : p.status === 'uploading' ? p.progress : 0), 0) / photos.length)
+      : 0
 
   const totalPhotoSize = photos.reduce((sum, p) => sum + p.file.size, 0)
   const totalVideoSize = videos.reduce((sum, v) => sum + v.file.size, 0)
@@ -328,7 +375,26 @@ export const BulkUploadPanel = () => {
       {/* Existing files section */}
       {existingFiles.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={styles.title}>Wgrane pliki klienta</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ ...styles.title, marginBottom: 0 }}>Wgrane pliki klienta</h3>
+            <button
+              type="button"
+              onClick={handleDeleteAll}
+              disabled={isDeletingAll}
+              style={{
+                padding: '6px 14px',
+                background: isDeletingAll ? '#fca5a5' : '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: isDeletingAll ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {isDeletingAll ? 'Usuwanie...' : `Usun wszystkie (${existingFiles.length})`}
+            </button>
+          </div>
 
           {existingPhotos.length > 0 && (
             <div style={styles.section}>
@@ -336,30 +402,54 @@ export const BulkUploadPanel = () => {
                 <span style={styles.sectionTitle}>
                   Zdjecia ({existingPhotos.length}) - {formatSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
+                {visiblePhotoCount === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setVisiblePhotoCount(100)}
+                    style={{ ...styles.selectBtn, padding: '4px 12px', fontSize: '12px' }}
+                  >
+                    Pokaz podglad
+                  </button>
+                )}
               </div>
-              <div style={styles.existingGrid}>
-                {existingPhotos.map((file) => (
-                  <div key={file.id} style={styles.existingTile}>
-                    <img
-                      src={`/api/client-files/file/${file.filename}`}
-                      alt={file.filename}
-                      style={styles.existingThumb}
-                      loading="lazy"
-                    />
-                    <div style={styles.existingOverlay}>
-                      <span style={styles.existingName}>{file.filename}</span>
+              {visiblePhotoCount > 0 && (
+                <>
+                  <div style={styles.existingGrid}>
+                    {existingPhotos.slice(0, visiblePhotoCount).map((file) => (
+                      <div key={file.id} style={styles.existingTile}>
+                        <img
+                          src={`/api/client-files/file/${file.filename}`}
+                          alt={file.filename}
+                          style={styles.existingThumb}
+                          loading="lazy"
+                        />
+                        <div style={styles.existingOverlay}>
+                          <span style={styles.existingName}>{file.filename}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFile(file.id)}
+                            disabled={deletingId === file.id}
+                            style={styles.deleteBtn}
+                          >
+                            {deletingId === file.id ? '...' : 'x'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {visiblePhotoCount < existingPhotos.length && (
+                    <div style={{ textAlign: 'center', marginTop: '8px' }}>
                       <button
                         type="button"
-                        onClick={() => handleDeleteFile(file.id)}
-                        disabled={deletingId === file.id}
-                        style={styles.deleteBtn}
+                        onClick={() => setVisiblePhotoCount((prev) => prev + 100)}
+                        style={{ ...styles.selectBtn, padding: '6px 16px', fontSize: '12px' }}
                       >
-                        {deletingId === file.id ? '...' : 'x'}
+                        Zaladuj wiecej ({Math.min(100, existingPhotos.length - visiblePhotoCount)} z {existingPhotos.length - visiblePhotoCount} pozostalych)
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -420,7 +510,27 @@ export const BulkUploadPanel = () => {
         </div>
       )}
 
-      {loadingFiles && <p style={styles.hint}>Ladowanie plikow...</p>}
+      {loadingFiles && (
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={styles.title}>Wgrane pliki klienta</h3>
+          <div style={styles.section}>
+            <div style={styles.existingGrid}>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    ...styles.existingTile,
+                    background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s infinite',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
+        </div>
+      )}
 
       {/* Overall upload progress */}
       {isUploading && (

@@ -5,6 +5,18 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
+function SkeletonGrid({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={`skeleton-${i}`} className="relative aspect-square overflow-hidden bg-cream">
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-cream via-primary/5 to-cream" />
+        </div>
+      ))}
+    </>
+  )
+}
+
 interface FileData {
   id: string
   filename: string
@@ -145,26 +157,28 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
             onClick={() => setLightboxId(photo.id)}
             className="group relative aspect-square overflow-hidden bg-cream"
           >
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-cream via-primary/5 to-cream" />
             <Image
               src={`/api/client/preview/${photo.id}?size=thumbnail`}
               alt={photo.displayName || photo.filename}
               fill
-              className="object-cover transition-transform duration-200 group-hover:scale-105"
+              className="relative z-10 object-cover transition-transform duration-200 group-hover:scale-105"
               unoptimized
             />
-            <div className="cursor-pointer absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+            <div className="pointer-events-none absolute inset-0 z-20 bg-black/0 transition-colors group-hover:bg-black/10" />
           </button>
         ))}
       </div>
 
-      {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} className="h-px" />
-
+      {/* Skeleton placeholders while fetching next page */}
       {isFetchingNextPage && (
-        <div className="flex justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          <SkeletonGrid count={PAGE_SIZE} />
         </div>
       )}
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} className="h-px" />
 
       {/* Lightbox */}
       {lightboxPhoto && (
