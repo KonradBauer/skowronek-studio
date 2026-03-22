@@ -73,7 +73,7 @@ export default async function DashboardPage() {
         <form action="/api/clients/logout" method="POST">
           <button
             type="submit"
-            className="text-sm text-body transition-colors hover:text-primary"
+            className="cursor-pointer text-sm text-body transition-colors hover:text-primary"
           >
             Wyloguj
           </button>

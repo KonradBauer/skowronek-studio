@@ -32,12 +32,12 @@ export function ClientDashboard({ photos, videos }: ClientDashboardProps) {
       <div>
         <button
           onClick={() => setView('root')}
-          className="mb-6 flex items-center gap-2 text-sm text-body transition-colors hover:text-primary"
+          className="cursor-pointer mb-6 flex items-center gap-2 text-sm text-body transition-colors hover:text-primary"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Powrot
+          Powrót
         </button>
         <PhotoGrid photos={photos} />
       </div>
@@ -67,7 +67,7 @@ export function ClientDashboard({ photos, videos }: ClientDashboardProps) {
       {photos.length > 0 && (
         <button
           onClick={() => setView('photos')}
-          className="group flex flex-col items-center gap-4 border border-input-border bg-white p-10 transition-all hover:border-primary/40 hover:shadow-md"
+          className="cursor-pointer group flex flex-col items-center gap-4 border border-input-border bg-white p-10 transition-all hover:border-primary/40 hover:shadow-md"
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-cream text-primary transition-transform group-hover:scale-110">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -88,7 +88,7 @@ export function ClientDashboard({ photos, videos }: ClientDashboardProps) {
       {videos.length > 0 && (
         <button
           onClick={() => setView('videos')}
-          className="group flex flex-col items-center gap-4 border border-input-border bg-white p-10 transition-all hover:border-primary/40 hover:shadow-md"
+          className="cursor-pointer group flex flex-col items-center gap-4 border border-input-border bg-white p-10 transition-all hover:border-primary/40 hover:shadow-md"
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-cream text-primary transition-transform group-hover:scale-110">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

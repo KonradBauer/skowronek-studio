@@ -2,7 +2,6 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
-import Image from 'next/image'
 
 const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -313,12 +312,11 @@ export const BulkUploadPanel = () => {
               <div style={styles.existingGrid}>
                 {existingPhotos.map((file) => (
                   <div key={file.id} style={styles.existingTile}>
-                    <Image
+                    <img
                       src={`/api/client-files/file/${file.filename}`}
                       alt={file.filename}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      sizes="150px"
+                      style={styles.existingThumb}
+                      loading="lazy"
                     />
                     <div style={styles.existingOverlay}>
                       <span style={styles.existingName}>{file.filename}</span>

@@ -103,7 +103,7 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
               className="object-cover transition-transform duration-200 group-hover:scale-105"
               unoptimized
             />
-            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+            <div className="cursor-pointer absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
           </button>
         ))}
       </div>
