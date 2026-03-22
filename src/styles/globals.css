@@ -27,6 +27,12 @@
   --duration-slow: 600ms;
 }
 
+/* Prevent horizontal overflow from animations on mobile */
+html:has(.frontend),
+html:has(.frontend) body {
+  overflow-x: clip;
+}
+
 /* Base styles - scoped to .frontend to avoid leaking into Payload admin */
 .frontend {
   scroll-behavior: smooth;
