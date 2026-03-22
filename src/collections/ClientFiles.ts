@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { invalidateZipCache } from '@/lib/zip-generator'
 
 export const ClientFiles: CollectionConfig = {
   slug: 'client-files',
@@ -56,6 +57,30 @@ export const ClientFiles: CollectionConfig = {
         description: 'Opcjonalna nazwa przyjazna dla klienta',
       },
     },
+    {
+      name: 'videoThumbnail',
+      type: 'text',
+      label: 'Miniaturka wideo',
+      admin: { hidden: true },
+    },
+    {
+      name: 'hlsStatus',
+      type: 'select',
+      defaultValue: 'none',
+      options: [
+        { label: 'Brak', value: 'none' },
+        { label: 'W kolejce', value: 'pending' },
+        { label: 'Przetwarzanie', value: 'processing' },
+        { label: 'Gotowe', value: 'ready' },
+        { label: 'Blad', value: 'error' },
+      ],
+      admin: { readOnly: true },
+    },
+    {
+      name: 'hlsPath',
+      type: 'text',
+      admin: { hidden: true },
+    },
   ],
   hooks: {
     beforeChange: [
@@ -65,6 +90,22 @@ export const ClientFiles: CollectionConfig = {
           data.category = data.mimeType.startsWith('video/') ? 'video' : 'photo'
         }
         return data
+      },
+    ],
+    afterChange: [
+      ({ doc, req }) => {
+        const clientId = typeof doc.client === 'object' ? doc.client.id : doc.client
+        if (clientId) {
+          invalidateZipCache(req.payload, clientId, doc.category || 'photo').catch(console.error)
+        }
+      },
+    ],
+    afterDelete: [
+      ({ doc, req }) => {
+        const clientId = typeof doc.client === 'object' ? doc.client.id : doc.client
+        if (clientId) {
+          invalidateZipCache(req.payload, clientId, doc.category || 'photo').catch(console.error)
+        }
       },
     ],
   },

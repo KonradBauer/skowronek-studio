@@ -60,6 +60,46 @@ export async function GET(
     return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
   }
 
+  // Video thumbnail request
+  if (isVideo && req.nextUrl.searchParams.get('size') === 'thumbnail') {
+    const thumbFilename = String(fileDoc.videoThumbnail || '')
+    if (thumbFilename) {
+      if (process.env.S3_BUCKET) {
+        const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
+        const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
+        const s3 = new S3Client({
+          endpoint: process.env.S3_ENDPOINT,
+          region: process.env.S3_REGION || 'auto',
+          credentials: {
+            accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+          },
+          forcePathStyle: true,
+        })
+        const url = await getSignedUrl(s3, new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET,
+          Key: `client-files/${thumbFilename}`,
+        }), { expiresIn: 3600 })
+        return NextResponse.redirect(url)
+      }
+
+      const thumbPath = path.resolve('uploads', 'client-files', thumbFilename)
+      try {
+        await access(thumbPath)
+        const buffer = await readFile(thumbPath)
+        return new NextResponse(buffer, {
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Cache-Control': 'private, max-age=86400',
+          },
+        })
+      } catch {
+        // Thumbnail not found, return 404
+      }
+    }
+    return new NextResponse(null, { status: 404 })
+  }
+
   // S3 mode - redirect to presigned URL
   if (process.env.S3_BUCKET) {
     const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')

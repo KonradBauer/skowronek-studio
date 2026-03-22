@@ -6,6 +6,9 @@ import { createWriteStream, createReadStream } from 'fs'
 import path from 'path'
 import { pipeline } from 'stream/promises'
 import crypto from 'crypto'
+import { generateVideoThumbnailForDoc } from '@/lib/video-thumbnail'
+import { generateClientZip } from '@/lib/zip-generator'
+import { transcodeToHLS } from '@/lib/hls-transcoder'
 
 // Max file size to read into Buffer for Payload (1GB)
 const MAX_BUFFER_SIZE = 1024 * 1024 * 1024
@@ -77,6 +80,14 @@ export async function POST(req: NextRequest) {
       // Cleanup tmp directory
       await rm(tmpDir, { recursive: true, force: true })
 
+      // Fire-and-forget: background tasks
+      if (mimeType.startsWith('video/')) {
+        generateVideoThumbnailForDoc(doc.id, uniqueName).catch(console.error)
+        transcodeToHLS(doc.id, uniqueName).catch(console.error)
+      }
+      const fileCategory = category || (mimeType.startsWith('video/') ? 'video' : 'photo')
+      generateClientZip(Number(clientId), fileCategory).catch(console.error)
+
       return NextResponse.json({
         success: true,
         fileId: doc.id,
@@ -128,6 +139,11 @@ export async function POST(req: NextRequest) {
 
     // Cleanup tmp directory
     await rm(tmpDir, { recursive: true, force: true })
+
+    // Fire-and-forget: generate video thumbnail
+    if (mimeType.startsWith('video/')) {
+      generateVideoThumbnailForDoc(doc.id, uniqueName).catch(console.error)
+    }
 
     return NextResponse.json({
       success: true,

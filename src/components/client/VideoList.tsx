@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
+import { HLSPlayer } from './HLSPlayer'
 
 interface FileData {
   id: string
@@ -9,6 +11,7 @@ interface FileData {
   displayName?: string
   mimeType: string
   filesize: number
+  hlsStatus?: string
 }
 
 interface VideoListProps {
@@ -108,34 +111,50 @@ export function VideoList({ videos }: VideoListProps) {
               {/* Player */}
               {isPlaying && (
                 <div className="relative aspect-video w-full bg-black">
-                  <video
-                    src={`/api/client/preview/${video.id}`}
-                    className="h-full w-full"
-                    controls
-                    autoPlay
-                    controlsList="nodownload"
-                  />
+                  {video.hlsStatus === 'ready' ? (
+                    <HLSPlayer
+                      hlsSrc={`/api/client/hls/${video.id}/master.m3u8`}
+                      fallbackSrc={`/api/client/preview/${video.id}`}
+                    />
+                  ) : (
+                    <video
+                      src={`/api/client/preview/${video.id}`}
+                      className="h-full w-full"
+                      controls
+                      autoPlay
+                      controlsList="nodownload"
+                    />
+                  )}
                 </div>
               )}
 
               {/* Info bar */}
               <div className="flex items-center gap-4 p-5">
-                {/* Play/Stop toggle */}
+                {/* Thumbnail / Play toggle */}
                 <button
                   type="button"
                   onClick={() => setPlayingId(isPlaying ? null : video.id)}
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-cream text-primary transition-colors hover:bg-primary hover:text-white"
+                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-cream"
                 >
-                  {isPlaying ? (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                      <rect x="6" y="4" width="4" height="16" />
-                      <rect x="14" y="4" width="4" height="16" />
-                    </svg>
-                  ) : (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                  )}
+                  <Image
+                    src={`/api/client/preview/${video.id}?size=thumbnail`}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-colors hover:bg-black/40">
+                    {isPlaying ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    )}
+                  </div>
                 </button>
 
                 {/* Info */}

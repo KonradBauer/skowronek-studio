@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
@@ -13,7 +14,9 @@ interface FileData {
 }
 
 interface PhotoGridProps {
-  photos: FileData[]
+  initialPhotos: FileData[]
+  totalCount: number
+  totalSize: number
 }
 
 function formatTotalSize(bytes: number): string {
@@ -22,10 +25,77 @@ function formatTotalSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
-export function PhotoGrid({ photos }: PhotoGridProps) {
+const PAGE_SIZE = 30
+
+export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridProps) {
   const [downloading, setDownloading] = useState(false)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
-  const totalSize = photos.reduce((s, f) => s + f.filesize, 0)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['photos'],
+    queryFn: async ({ pageParam }) => {
+      const res = await fetch(`/api/client/files?category=photo&page=${pageParam}&limit=${PAGE_SIZE}`)
+      if (!res.ok) throw new Error('Failed to fetch photos')
+      return res.json() as Promise<{ docs: FileData[]; hasNextPage: boolean; page: number }>
+    },
+    initialPageParam: 2,
+    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.page + 1 : undefined),
+    initialData: {
+      pages: [{ docs: initialPhotos, hasNextPage: totalCount > PAGE_SIZE, page: 1 }],
+      pageParams: [2],
+    },
+  })
+
+  const allPhotos = data?.pages.flatMap((p) => p.docs) ?? initialPhotos
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '400px' },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // Lightbox
+  const lightboxPhoto = lightboxId ? allPhotos.find((p) => p.id === lightboxId) : null
+  const lightboxIndex = lightboxId ? allPhotos.findIndex((p) => p.id === lightboxId) : -1
+
+  const navigateLightbox = useCallback(
+    (dir: -1 | 1) => {
+      const idx = lightboxId ? allPhotos.findIndex((p) => p.id === lightboxId) : -1
+      const newIndex = idx + dir
+      if (newIndex >= 0 && newIndex < allPhotos.length) {
+        setLightboxId(allPhotos[newIndex].id)
+        // Prefetch next page when nearing end of loaded photos
+        if (newIndex >= allPhotos.length - 5 && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      }
+    },
+    [lightboxId, allPhotos, hasNextPage, isFetchingNextPage, fetchNextPage],
+  )
+
+  useEffect(() => {
+    if (!lightboxId) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') navigateLightbox(-1)
+      else if (e.key === 'ArrowRight') navigateLightbox(1)
+      else if (e.key === 'Escape') setLightboxId(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxId, navigateLightbox])
 
   async function handleDownloadZip() {
     setDownloading(true)
@@ -51,28 +121,6 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
     }
   }
 
-  const lightboxPhoto = lightboxId ? photos.find((p) => p.id === lightboxId) : null
-  const lightboxIndex = lightboxId ? photos.findIndex((p) => p.id === lightboxId) : -1
-
-  const navigateLightbox = useCallback((dir: -1 | 1) => {
-    const idx = lightboxId ? photos.findIndex((p) => p.id === lightboxId) : -1
-    const newIndex = idx + dir
-    if (newIndex >= 0 && newIndex < photos.length) {
-      setLightboxId(photos[newIndex].id)
-    }
-  }, [lightboxId, photos])
-
-  useEffect(() => {
-    if (!lightboxId) return
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') navigateLightbox(-1)
-      else if (e.key === 'ArrowRight') navigateLightbox(1)
-      else if (e.key === 'Escape') setLightboxId(null)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [lightboxId, navigateLightbox])
-
   return (
     <div>
       {/* Header */}
@@ -80,7 +128,8 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
         <div>
           <h2 className="text-lg font-light tracking-wide text-dark">Zdjecia</h2>
           <p className="text-sm text-body-muted">
-            {photos.length} {photos.length === 1 ? 'zdjecie' : photos.length < 5 ? 'zdjecia' : 'zdjec'} - {formatTotalSize(totalSize)}
+            {totalCount} {totalCount === 1 ? 'zdjecie' : totalCount < 5 ? 'zdjecia' : 'zdjec'} -{' '}
+            {formatTotalSize(totalSize)}
           </p>
         </div>
         <Button onClick={handleDownloadZip} disabled={downloading}>
@@ -90,7 +139,7 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
 
       {/* Grid */}
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-        {photos.map((photo) => (
+        {allPhotos.map((photo) => (
           <button
             key={photo.id}
             onClick={() => setLightboxId(photo.id)}
@@ -107,6 +156,15 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
           </button>
         ))}
       </div>
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} className="h-px" />
+
+      {isFetchingNextPage && (
+        <div className="flex justify-center py-8">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightboxPhoto && (
@@ -127,7 +185,10 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
           {/* Prev */}
           {lightboxIndex > 0 && (
             <button
-              onClick={(e) => { e.stopPropagation(); navigateLightbox(-1) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                navigateLightbox(-1)
+              }}
               className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white/70 transition-colors hover:text-white"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -137,9 +198,12 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
           )}
 
           {/* Next */}
-          {lightboxIndex < photos.length - 1 && (
+          {lightboxIndex < totalCount - 1 && (
             <button
-              onClick={(e) => { e.stopPropagation(); navigateLightbox(1) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                navigateLightbox(1)
+              }}
               className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white/70 transition-colors hover:text-white"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -161,7 +225,7 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
 
           {/* Info bar */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded bg-black/60 px-4 py-2 text-sm text-white/80">
-            {lightboxPhoto.displayName || lightboxPhoto.filename} - {lightboxIndex + 1}/{photos.length}
+            {lightboxPhoto.displayName || lightboxPhoto.filename} - {lightboxIndex + 1}/{totalCount}
           </div>
         </div>
       )}

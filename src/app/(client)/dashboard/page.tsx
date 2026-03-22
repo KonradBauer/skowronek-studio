@@ -9,6 +9,8 @@ import config from '@payload-config'
 import { ExpirationBanner } from '@/components/client/ExpirationBanner'
 import { ClientDashboard } from '@/components/client/ClientDashboard'
 
+const PHOTO_PAGE_SIZE = 30
+
 export default async function DashboardPage() {
   const payload = await getPayload({ config })
   const cookieStore = await cookies()
@@ -42,26 +44,58 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Fetch all client files
-  const filesResult = await payload.find({
+  // Fetch first page of photos + total stats
+  const photosResult = await payload.find({
     collection: 'client-files',
-    where: { client: { equals: Number(clientData.id) } },
-    limit: 2000,
+    where: {
+      client: { equals: Number(clientData.id) },
+      category: { equals: 'photo' },
+    },
+    limit: PHOTO_PAGE_SIZE,
+    page: 1,
+    sort: 'filename',
+  })
+
+  // Fetch all videos (typically few per client)
+  const videosResult = await payload.find({
+    collection: 'client-files',
+    where: {
+      client: { equals: Number(clientData.id) },
+      category: { equals: 'video' },
+    },
+    limit: 100,
     sort: 'filename',
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const files = filesResult.docs.map((doc: any) => ({
+  const mapFile = (doc: any) => ({
     id: String(doc.id),
     filename: String(doc.filename || ''),
     displayName: doc.displayName ? String(doc.displayName) : undefined,
     mimeType: String(doc.mimeType || 'application/octet-stream'),
     filesize: Number(doc.filesize || 0),
     category: String(doc.category || (doc.mimeType?.startsWith('video/') ? 'video' : 'photo')) as 'photo' | 'video',
-  }))
+    hlsStatus: doc.hlsStatus ? String(doc.hlsStatus) : undefined,
+  })
 
-  const photos = files.filter((f) => f.category === 'photo')
-  const videos = files.filter((f) => f.category === 'video')
+  const initialPhotos = photosResult.docs.map(mapFile)
+  const videos = videosResult.docs.map(mapFile)
+
+  // Calculate total photo size — if all fit on first page, use those; otherwise query all filesizes
+  let totalPhotoSize = initialPhotos.reduce((s, f) => s + f.filesize, 0)
+  if (photosResult.totalDocs > PHOTO_PAGE_SIZE) {
+    const allPhotosForSize = await payload.find({
+      collection: 'client-files',
+      where: {
+        client: { equals: Number(clientData.id) },
+        category: { equals: 'photo' },
+      },
+      limit: 2000,
+      sort: 'filename',
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    totalPhotoSize = allPhotosForSize.docs.reduce((s: number, d: any) => s + Number(d.filesize || 0), 0)
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
@@ -96,7 +130,12 @@ export default async function DashboardPage() {
       </div>
 
       {/* Folder-based file browser */}
-      <ClientDashboard photos={photos} videos={videos} />
+      <ClientDashboard
+        initialPhotos={initialPhotos}
+        totalPhotoCount={photosResult.totalDocs}
+        totalPhotoSize={totalPhotoSize}
+        videos={videos}
+      />
     </div>
   )
 }

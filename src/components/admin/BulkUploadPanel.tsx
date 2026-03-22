@@ -11,6 +11,8 @@ interface FileEntry {
   file: File
   status: UploadStatus
   progress: number
+  bytesUploaded: number
+  startTime?: number
   error?: string
 }
 
@@ -29,11 +31,19 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
+function formatEta(seconds: number): string {
+  if (seconds <= 0) return '...'
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  if (m === 0) return `${s} s`
+  return `${m} min ${s} s`
+}
+
 async function uploadFile(
   file: File,
   clientId: string,
   category: 'photo' | 'video',
-  onProgress: (progress: number) => void,
+  onProgress: (progress: number, bytesUploaded: number) => void,
 ): Promise<void> {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
 
@@ -76,7 +86,8 @@ async function uploadFile(
       throw new Error(err.error || `Blad wysylania chunka ${i}`)
     }
 
-    onProgress(((i + 1) / totalChunks) * 100)
+    const bytesUploaded = Math.min((i + 1) * CHUNK_SIZE, file.size)
+    onProgress(((i + 1) / totalChunks) * 100, bytesUploaded)
   }
 
   const completeRes = await fetch('/api/upload/complete', {
@@ -104,6 +115,8 @@ export const BulkUploadPanel = () => {
   const [videos, setVideos] = useState<FileEntry[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [uploadStats, setUploadStats] = useState({ speed: 0, eta: 0, totalBytesUploaded: 0, totalBytes: 0, filesDone: 0, filesTotal: 0 })
+  const uploadStartTimeRef = useRef(0)
   const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([])
   const [loadingFiles, setLoadingFiles] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -160,7 +173,7 @@ export const BulkUploadPanel = () => {
     const newVideos: FileEntry[] = []
 
     for (const file of fileArray) {
-      const entry: FileEntry = { file, status: 'pending', progress: 0 }
+      const entry: FileEntry = { file, status: 'pending', progress: 0, bytesUploaded: 0 }
       if (file.type.startsWith('video/')) {
         newVideos.push(entry)
       } else if (file.type.startsWith('image/')) {
@@ -195,37 +208,49 @@ export const BulkUploadPanel = () => {
     if (!id) return
     setIsUploading(true)
 
-    const totalPhotoBytes = photos.reduce((sum, p) => sum + p.file.size, 0)
-    let uploadedPhotoBytes = 0
+    const allFiles = [
+      ...photos.map((p, i) => ({ entry: p, idx: i, category: 'photo' as const })),
+      ...videos.map((v, i) => ({ entry: v, idx: i, category: 'video' as const })),
+    ].filter((f) => f.entry.status !== 'done')
+
+    const totalBytes = allFiles.reduce((sum, f) => sum + f.entry.file.size, 0)
+    let completedBytes = 0
+    let filesDone = 0
+    const filesTotal = allFiles.length
+    uploadStartTimeRef.current = Date.now()
+
+    const updateStats = (currentFileBytes: number) => {
+      const totalUploaded = completedBytes + currentFileBytes
+      const elapsed = (Date.now() - uploadStartTimeRef.current) / 1000
+      const speed = elapsed > 0 ? totalUploaded / elapsed : 0
+      const remaining = totalBytes - totalUploaded
+      const eta = speed > 0 ? remaining / speed : 0
+
+      setUploadStats({ speed, eta, totalBytesUploaded: totalUploaded, totalBytes, filesDone, filesTotal })
+    }
 
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i]
       if (photo.status === 'done') continue
 
       setPhotos((prev) =>
-        prev.map((p, idx) => (idx === i ? { ...p, status: 'uploading' } : p)),
+        prev.map((p, idx) => (idx === i ? { ...p, status: 'uploading', startTime: Date.now() } : p)),
       )
 
       try {
-        const photoSize = photo.file.size
-        await uploadFile(photo.file, String(id), 'photo', (fileProgress) => {
-          const currentFileUploaded = (fileProgress / 100) * photoSize
-          const totalProgress =
-            totalPhotoBytes > 0
-              ? ((uploadedPhotoBytes + currentFileUploaded) / totalPhotoBytes) * 100
-              : 0
-
+        await uploadFile(photo.file, String(id), 'photo', (progress, bytesUploaded) => {
           setPhotos((prev) =>
-            prev.map((p, idx) =>
-              idx === i ? { ...p, progress: totalProgress } : p.status === 'done' ? p : { ...p, progress: totalProgress },
-            ),
+            prev.map((p, idx) => (idx === i ? { ...p, progress, bytesUploaded } : p)),
           )
+          updateStats(bytesUploaded)
         })
 
-        uploadedPhotoBytes += photoSize
+        completedBytes += photo.file.size
+        filesDone++
         setPhotos((prev) =>
-          prev.map((p, idx) => (idx === i ? { ...p, status: 'done', progress: 100 } : p)),
+          prev.map((p, idx) => (idx === i ? { ...p, status: 'done', progress: 100, bytesUploaded: photo.file.size } : p)),
         )
+        updateStats(0)
       } catch (err) {
         setPhotos((prev) =>
           prev.map((p, idx) =>
@@ -242,19 +267,23 @@ export const BulkUploadPanel = () => {
       if (video.status === 'done') continue
 
       setVideos((prev) =>
-        prev.map((v, idx) => (idx === i ? { ...v, status: 'uploading' } : v)),
+        prev.map((v, idx) => (idx === i ? { ...v, status: 'uploading', startTime: Date.now() } : v)),
       )
 
       try {
-        await uploadFile(video.file, String(id), 'video', (progress) => {
+        await uploadFile(video.file, String(id), 'video', (progress, bytesUploaded) => {
           setVideos((prev) =>
-            prev.map((v, idx) => (idx === i ? { ...v, progress } : v)),
+            prev.map((v, idx) => (idx === i ? { ...v, progress, bytesUploaded } : v)),
           )
+          updateStats(bytesUploaded)
         })
 
+        completedBytes += video.file.size
+        filesDone++
         setVideos((prev) =>
-          prev.map((v, idx) => (idx === i ? { ...v, status: 'done', progress: 100 } : v)),
+          prev.map((v, idx) => (idx === i ? { ...v, status: 'done', progress: 100, bytesUploaded: video.file.size } : v)),
         )
+        updateStats(0)
       } catch (err) {
         setVideos((prev) =>
           prev.map((v, idx) =>
@@ -267,7 +296,6 @@ export const BulkUploadPanel = () => {
     }
 
     setIsUploading(false)
-    // Refresh existing files list after upload
     fetchExistingFiles()
   }
 
@@ -393,6 +421,32 @@ export const BulkUploadPanel = () => {
       )}
 
       {loadingFiles && <p style={styles.hint}>Ladowanie plikow...</p>}
+
+      {/* Overall upload progress */}
+      {isUploading && (
+        <div style={{ marginBottom: '16px', padding: '12px', background: '#FAF7F2', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#826D4C' }}>
+              Wgrywanie: {uploadStats.filesDone}/{uploadStats.filesTotal} plikow
+            </span>
+            <span style={{ fontSize: '12px', color: '#666' }}>
+              {uploadStats.speed > 0 ? `${formatSize(uploadStats.speed)}/s` : '...'} | ~{formatEta(uploadStats.eta)}
+            </span>
+          </div>
+          <div style={styles.progressBar}>
+            <div
+              style={{
+                ...styles.progressFill,
+                width: `${uploadStats.totalBytes > 0 ? (uploadStats.totalBytesUploaded / uploadStats.totalBytes) * 100 : 0}%`,
+                background: '#826D4C',
+              }}
+            />
+          </div>
+          <div style={{ fontSize: '11px', color: '#999', marginTop: '4px', textAlign: 'right' as const }}>
+            {formatSize(uploadStats.totalBytesUploaded)} / {formatSize(uploadStats.totalBytes)}
+          </div>
+        </div>
+      )}
 
       {/* Upload section */}
       <h3 style={styles.title}>Wgrywanie nowych plikow</h3>

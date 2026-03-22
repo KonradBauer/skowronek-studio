@@ -13,6 +13,7 @@ import { GalleryImages } from '@/collections/GalleryImages'
 import { Services } from '@/collections/Services'
 import { ContactSubmissions } from '@/collections/ContactSubmissions'
 import { Media } from '@/collections/Media'
+import { ZipCache } from '@/collections/ZipCache'
 import { SiteSettings } from '@/globals/SiteSettings'
 import { HomePage } from '@/globals/HomePage'
 import { EmailTemplates } from '@/globals/EmailTemplates'
@@ -27,7 +28,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Clients, ClientFiles, GalleryImages, Media, Services, ContactSubmissions],
+  collections: [Users, Clients, ClientFiles, GalleryImages, Media, Services, ContactSubmissions, ZipCache],
   globals: [SiteSettings, HomePage, EmailTemplates],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'default-secret-change-me-in-production',

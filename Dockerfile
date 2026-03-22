@@ -32,7 +32,8 @@ ENV NODE_ENV=production
 # Allow larger files in memory (up to 4GB for assembling uploads)
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-RUN addgroup --system --gid 1001 nodejs && \
+RUN apk add --no-cache ffmpeg && \
+    addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
@@ -40,7 +41,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Uploads directory structure (local storage)
-RUN mkdir -p /app/uploads/client-files /app/uploads/gallery /app/uploads/tmp && \
+RUN mkdir -p /app/uploads/client-files /app/uploads/gallery /app/uploads/tmp /app/uploads/zips /app/uploads/hls && \
     chown -R nextjs:nodejs /app/uploads
 
 USER nextjs

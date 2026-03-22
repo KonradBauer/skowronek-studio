@@ -4,7 +4,7 @@ import config from '@payload-config'
 import archiver from 'archiver'
 import path from 'path'
 import { createReadStream } from 'fs'
-import { access } from 'fs/promises'
+import { access, readFile, stat } from 'fs/promises'
 import { PassThrough, Readable } from 'stream'
 
 export async function POST(req: NextRequest) {
@@ -54,7 +54,38 @@ export async function POST(req: NextRequest) {
 
   const zipName = category === 'video' ? 'Film.zip' : category === 'photo' ? 'Zdjecia.zip' : 'Pliki.zip'
 
-  // Create archive stream
+  // Check for pre-generated ZIP
+  const cached = await payload.find({
+    collection: 'zip-cache',
+    where: {
+      client: { equals: Number(clientUser.id) },
+      category: { equals: category },
+      status: { equals: 'ready' },
+    },
+    limit: 1,
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cachedDoc = cached.docs[0] as any
+  if (cachedDoc?.zipFilename) {
+    const zipPath = path.resolve('uploads', 'zips', cachedDoc.zipFilename)
+    try {
+      await access(zipPath)
+      const zipStat = await stat(zipPath)
+      const buffer = await readFile(zipPath)
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': `attachment; filename="${zipName}"`,
+          'Content-Length': String(zipStat.size),
+        },
+      })
+    } catch {
+      // Cached ZIP file missing, fall through to on-the-fly generation
+    }
+  }
+
+  // Create archive stream (fallback: on-the-fly)
   const archive = archiver('zip', { zlib: { level: 1 } }) // level 1 = fast compression (photos/videos are already compressed)
   const passThrough = new PassThrough()
 
