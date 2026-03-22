@@ -73,7 +73,7 @@ export const metadata: Metadata = {
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
-      <body className="frontend antialiased">
+      <body className="frontend antialiased overflow-x-hidden">
         <JsonLd />
         <Header />
         <StripeTransition />
