@@ -361,6 +361,11 @@ export const BulkUploadPanel = () => {
                             height="100%"
                             controls
                             playing
+                            config={{
+                              file: {
+                                forceVideo: true,
+                              },
+                            }}
                           />
                         </div>
                       )}

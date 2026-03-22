@@ -120,6 +120,7 @@ export function VideoList({ videos }: VideoListProps) {
                     playing
                     config={{
                       file: {
+                        forceVideo: true,
                         attributes: {
                           controlsList: 'nodownload',
                         },
