@@ -10,6 +10,7 @@ export const ClientFiles: CollectionConfig = {
     mimeTypes: ['image/*', 'video/*'],
     staticDir: 'uploads/client-files',
     imageSizes: [],
+    filesRequiredOnCreate: false,
   },
   admin: {
     useAsTitle: 'filename',

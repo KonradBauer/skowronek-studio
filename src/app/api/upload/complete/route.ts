@@ -9,11 +9,14 @@ import crypto from 'crypto'
 import { generateVideoThumbnailForDoc } from '@/lib/video-thumbnail'
 import { transcodeToHLS } from '@/lib/hls-transcoder'
 
-// Max file size to read into Buffer for Payload (1GB)
-const MAX_BUFFER_SIZE = 1024 * 1024 * 1024
+// Files up to 1.5 GB can be read into a Buffer and passed to Payload normally.
+// Above this threshold we stream chunks straight to the staticDir and create
+// the Payload document with metadata only (no file object), avoiding the ~2 GiB
+// Node.js Buffer limit entirely. This supports files of any size (30 GB+).
+const BUFFER_THRESHOLD = 1.5 * 1024 * 1024 * 1024
 
-// Allow up to 5 minutes for assembling large files
-export const maxDuration = 300
+// Allow up to 10 minutes for assembling very large files
+export const maxDuration = 600
 
 export async function POST(req: NextRequest) {
   const payload = await getPayload({ config })
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest) {
     const baseName = path.basename(filename, ext)
     const uniqueName = `${baseName}-${crypto.randomUUID().slice(0, 8)}${ext}`
 
-    // Calculate total size from file stats (without loading into memory)
+    // Calculate total size from chunk stats (no memory needed)
     let totalSize = 0
     for (const chunkFile of chunkFiles) {
       const chunkStat = await stat(path.join(tmpDir, chunkFile))
@@ -62,8 +65,8 @@ export async function POST(req: NextRequest) {
 
     const fileCategory = category || (mimeType.startsWith('video/') ? 'video' : 'photo')
 
-    if (totalSize <= MAX_BUFFER_SIZE) {
-      // Small/medium files (<=1GB): read into buffer and pass to Payload
+    if (totalSize <= BUFFER_THRESHOLD) {
+      // ── Small/medium files: read into buffer, let Payload handle everything ──
       const chunkBuffers: Buffer[] = []
       for (const chunkFile of chunkFiles) {
         chunkBuffers.push(await readFile(path.join(tmpDir, chunkFile)))
@@ -96,43 +99,49 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Large files (>1GB): assemble chunks to temp file, let Payload handle via filePath
-    const assembledPath = path.join(tmpDir, uniqueName)
-    const writeStream = createWriteStream(assembledPath)
+    // ── Large files: stream to staticDir, create doc with metadata only ──
+    const staticDir = path.resolve('uploads', 'client-files')
+    await mkdir(staticDir, { recursive: true })
+    const destPath = path.join(staticDir, uniqueName)
 
+    const writeStream = createWriteStream(destPath)
     for (const chunkFile of chunkFiles) {
-      const chunkPath = path.join(tmpDir, chunkFile)
-      await pipeline(createReadStream(chunkPath), writeStream, { end: false })
+      await pipeline(createReadStream(path.join(tmpDir, chunkFile)), writeStream, { end: false })
     }
-
     await new Promise<void>((resolve, reject) => {
       writeStream.end(() => resolve())
       writeStream.on('error', reject)
     })
 
-    // Use filePath so Payload reads the file, detects MIME, and writes it to staticDir
+    // Verify assembled file
+    const finalStat = await stat(destPath)
+    if (finalStat.size !== totalSize) {
+      throw new Error(`Rozmiar pliku nie zgadza sie: oczekiwano ${totalSize}, otrzymano ${finalStat.size}`)
+    }
+
+    // Create Payload document with metadata — file is already on disk
     const doc = await payload.create({
       collection: 'client-files',
       data: {
         client: Number(clientId),
         category: fileCategory,
+        filename: uniqueName,
+        mimeType,
+        filesize: totalSize,
       },
-      filePath: assembledPath,
     })
 
     await rm(tmpDir, { recursive: true, force: true })
 
-    const savedFilename = doc.filename || uniqueName
-
     if (mimeType.startsWith('video/')) {
-      generateVideoThumbnailForDoc(doc.id, savedFilename).catch(console.error)
-      transcodeToHLS(doc.id, savedFilename).catch(console.error)
+      generateVideoThumbnailForDoc(doc.id, uniqueName).catch(console.error)
+      transcodeToHLS(doc.id, uniqueName).catch(console.error)
     }
 
     return NextResponse.json({
       success: true,
       fileId: doc.id,
-      filename: savedFilename,
+      filename: uniqueName,
       size: totalSize,
     })
   } catch (err) {
