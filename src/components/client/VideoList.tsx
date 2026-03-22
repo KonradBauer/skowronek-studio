@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { HLSPlayer } from './HLSPlayer'
 
@@ -130,31 +129,22 @@ export function VideoList({ videos }: VideoListProps) {
 
               {/* Info bar */}
               <div className="flex items-center gap-4 p-5">
-                {/* Thumbnail / Play toggle */}
+                {/* Play toggle */}
                 <button
                   type="button"
                   onClick={() => setPlayingId(isPlaying ? null : video.id)}
-                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-cream"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
                 >
-                  <Image
-                    src={`/api/client/preview/${video.id}?size=thumbnail`}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white transition-colors hover:bg-black/40">
-                    {isPlaying ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                        <rect x="6" y="4" width="4" height="16" />
-                        <rect x="14" y="4" width="4" height="16" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    )}
-                  </div>
+                  {isPlaying ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <polygon points="6 3 20 12 6 21 6 3" />
+                    </svg>
+                  )}
                 </button>
 
                 {/* Info */}

@@ -1,21 +1,63 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
+
+function Spinner() {
+  return (
+    <svg className="h-5 w-5 animate-spin text-primary/40" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  )
+}
 
 function SkeletonGrid({ count }: { count: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={`skeleton-${i}`} className="relative aspect-square overflow-hidden bg-cream">
-          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-cream via-primary/5 to-cream" />
+        <div key={`skeleton-${i}`} className="relative flex aspect-square items-center justify-center bg-cream">
+          <Spinner />
         </div>
       ))}
     </>
   )
 }
+
+const LazyPhoto = memo(function LazyPhoto({
+  photo,
+  onClick,
+}: {
+  photo: FileData
+  onClick: () => void
+}) {
+  const [loaded, setLoaded] = useState(false)
+
+  return (
+    <button
+      onClick={onClick}
+      className="group relative aspect-square overflow-hidden bg-cream"
+    >
+      {!loaded && (
+        <div className="absolute inset-0 z-0 flex items-center justify-center">
+          <Spinner />
+        </div>
+      )}
+      <Image
+        src={`/api/client/preview/${photo.id}?size=thumbnail`}
+        alt={photo.displayName || photo.filename}
+        fill
+        className={`relative z-10 object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        unoptimized
+      />
+      <div className="pointer-events-none absolute inset-0 z-20 bg-black/0 transition-colors group-hover:bg-black/10" />
+    </button>
+  )
+})
 
 interface FileData {
   id: string
@@ -192,21 +234,11 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
       {/* Grid */}
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
         {allPhotos.map((photo) => (
-          <button
+          <LazyPhoto
             key={photo.id}
+            photo={photo}
             onClick={() => setLightboxId(photo.id)}
-            className="group relative aspect-square overflow-hidden bg-cream"
-          >
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-cream via-primary/5 to-cream" />
-            <Image
-              src={`/api/client/preview/${photo.id}?size=thumbnail`}
-              alt={photo.displayName || photo.filename}
-              fill
-              className="relative z-10 object-cover transition-transform duration-200 group-hover:scale-105"
-              unoptimized
-            />
-            <div className="pointer-events-none absolute inset-0 z-20 bg-black/0 transition-colors group-hover:bg-black/10" />
-          </button>
+          />
         ))}
       </div>
 

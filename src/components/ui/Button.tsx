@@ -31,7 +31,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const classes = `
       inline-flex items-center justify-center font-medium tracking-wide
       transition-all duration-[var(--duration-normal)] ease-[var(--ease-smooth)]
-      cursor-pointer select-none
+      select-none
+      disabled:opacity-60 disabled:pointer-events-none
+      ${props.disabled ? '' : 'cursor-pointer'}
       ${variantClasses[variant]}
       ${sizeClasses[size]}
       ${className}
