@@ -3,10 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 import Image from 'next/image'
-import dynamic from 'next/dynamic'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ReactPlayer = dynamic(() => import('react-player') as any, { ssr: false }) as any
 
 const CHUNK_SIZE = 10 * 1024 * 1024 // 10MB
 
@@ -355,17 +351,11 @@ export const BulkUploadPanel = () => {
                     <div key={file.id} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', overflow: 'hidden' }}>
                       {isPlaying && (
                         <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000' }}>
-                          <ReactPlayer
-                            url={`/api/client-files/file/${file.filename}`}
-                            width="100%"
-                            height="100%"
+                          <video
+                            src={`/api/client-files/file/${file.filename}`}
+                            style={{ width: '100%', height: '100%' }}
                             controls
-                            playing
-                            config={{
-                              file: {
-                                forceVideo: true,
-                              },
-                            }}
+                            autoPlay
                           />
                         </div>
                       )}

@@ -1,11 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ReactPlayer = dynamic(() => import('react-player') as any, { ssr: false }) as any
 
 interface FileData {
   id: string
@@ -112,20 +108,12 @@ export function VideoList({ videos }: VideoListProps) {
               {/* Player */}
               {isPlaying && (
                 <div className="relative aspect-video w-full bg-black">
-                  <ReactPlayer
-                    url={`/api/client/preview/${video.id}`}
-                    width="100%"
-                    height="100%"
+                  <video
+                    src={`/api/client/preview/${video.id}`}
+                    className="h-full w-full"
                     controls
-                    playing
-                    config={{
-                      file: {
-                        forceVideo: true,
-                        attributes: {
-                          controlsList: 'nodownload',
-                        },
-                      },
-                    }}
+                    autoPlay
+                    controlsList="nodownload"
                   />
                 </div>
               )}
