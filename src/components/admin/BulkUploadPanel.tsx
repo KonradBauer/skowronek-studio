@@ -6,7 +6,7 @@ import { useDocumentInfo } from '@payloadcms/ui'
 const MAX_CONCURRENT_PHOTOS = 2
 const MAX_RETRIES = 2
 
-type UploadStatus = 'pending' | 'uploading' | 'done' | 'error'
+type UploadStatus = 'pending' | 'uploading' | 'processing' | 'done' | 'error'
 
 interface FileEntry {
   file: File
@@ -15,6 +15,7 @@ interface FileEntry {
   bytesUploaded: number
   startTime?: number
   error?: string
+  uploadId?: string
 }
 
 interface ExistingFile {
@@ -40,44 +41,96 @@ function formatEta(seconds: number): string {
   return `${m} min ${s} s`
 }
 
-// Direct upload with XHR for progress
-function uploadDirect(
+// Cleanup chunks on server for a failed upload
+async function cleanupUpload(uploadId: string): Promise<void> {
+  await fetch('/api/upload/cleanup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uploadId }),
+  }).catch(() => {})
+}
+
+// Chunked upload: init → send chunks → complete
+async function uploadChunked(
   file: File,
   clientId: string,
   category: 'photo' | 'video',
   onProgress: (progress: number, bytesUploaded: number) => void,
+  onProcessing?: (uploadId: string) => void,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', '/api/upload/direct')
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        onProgress((e.loaded / e.total) * 100, e.loaded)
-      }
-    }
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve()
-      } else {
-        try {
-          const err = JSON.parse(xhr.responseText)
-          reject(new Error(err.error || `Blad uploadu (${xhr.status})`))
-        } catch {
-          reject(new Error(`Blad uploadu (${xhr.status})`))
-        }
-      }
-    }
-
-    xhr.onerror = () => reject(new Error('Blad sieci'))
-
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('clientId', clientId)
-    formData.append('category', category)
-    xhr.send(formData)
+  // Step 1: Init upload
+  const initRes = await fetch('/api/upload/init', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      clientId,
+      filename: file.name,
+      mimeType: file.type,
+      totalSize: file.size,
+      totalChunks: Math.ceil(file.size / (10 * 1024 * 1024)),
+    }),
   })
+
+  if (!initRes.ok) {
+    const err = await initRes.json().catch(() => ({}))
+    throw new Error(err.error || `Blad init uploadu (${initRes.status})`)
+  }
+
+  const { uploadId, chunkSize } = await initRes.json()
+
+  // Step 2: Send chunks
+  const totalChunks = Math.ceil(file.size / chunkSize)
+  let bytesUploaded = 0
+
+  try {
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * chunkSize
+      const end = Math.min(start + chunkSize, file.size)
+      const chunk = file.slice(start, end)
+
+      const formData = new FormData()
+      formData.append('uploadId', uploadId)
+      formData.append('chunkIndex', String(i))
+      formData.append('chunk', chunk)
+
+      const chunkRes = await fetch('/api/upload/chunk', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!chunkRes.ok) {
+        const err = await chunkRes.json().catch(() => ({}))
+        throw new Error(err.error || `Blad uploadu chunk ${i} (${chunkRes.status})`)
+      }
+
+      bytesUploaded = end
+      onProgress((bytesUploaded / file.size) * 100, bytesUploaded)
+    }
+
+    // Step 3: Signal processing phase, then complete
+    onProcessing?.(uploadId)
+
+    const completeRes = await fetch('/api/upload/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uploadId,
+        clientId,
+        filename: file.name,
+        mimeType: file.type,
+        category,
+      }),
+    })
+
+    if (!completeRes.ok) {
+      const err = await completeRes.json().catch(() => ({}))
+      throw new Error(err.error || `Blad zakonczenia uploadu (${completeRes.status})`)
+    }
+  } catch (err) {
+    // Cleanup chunks on any failure so retry starts fresh
+    await cleanupUpload(uploadId)
+    throw err
+  }
 }
 
 // Wrapper with retry logic
@@ -86,11 +139,12 @@ async function uploadWithRetry(
   clientId: string,
   category: 'photo' | 'video',
   onProgress: (progress: number, bytesUploaded: number) => void,
+  onProcessing?: (uploadId: string) => void,
 ): Promise<void> {
   let lastError: Error | undefined
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      await uploadDirect(file, clientId, category, onProgress)
+      await uploadChunked(file, clientId, category, onProgress, onProcessing)
       return
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
@@ -102,48 +156,6 @@ async function uploadWithRetry(
     }
   }
   throw lastError
-}
-
-// Stream upload for videos — raw body streamed to disk, handles 20GB+ files
-function uploadVideo(
-  file: File,
-  clientId: string,
-  onProgress: (progress: number, bytesUploaded: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const params = new URLSearchParams({
-      clientId,
-      filename: file.name,
-      mimeType: file.type,
-      category: 'video',
-    })
-
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', `/api/upload/stream?${params}`)
-    xhr.setRequestHeader('Content-Type', 'application/octet-stream')
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        onProgress((e.loaded / e.total) * 100, e.loaded)
-      }
-    }
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve()
-      } else {
-        try {
-          const err = JSON.parse(xhr.responseText)
-          reject(new Error(err.error || `Blad uploadu video (${xhr.status})`))
-        } catch {
-          reject(new Error(`Blad uploadu video (${xhr.status})`))
-        }
-      }
-    }
-
-    xhr.onerror = () => reject(new Error('Blad sieci'))
-    xhr.send(file)
-  })
 }
 
 export const BulkUploadPanel = () => {
@@ -339,13 +351,28 @@ export const BulkUploadPanel = () => {
       inProgressBytes.set(key, 0)
 
       try {
-        await uploadVideo(item.file, String(id), (progress, bytesUploaded) => {
-          setVideos((prev) =>
-            prev.map((v, idx) => (idx === item.idx ? { ...v, progress, bytesUploaded } : v)),
-          )
-          inProgressBytes.set(key, bytesUploaded)
-          updateStats()
-        })
+        await uploadChunked(
+          item.file,
+          String(id),
+          'video',
+          (progress, bytesUploaded) => {
+            setVideos((prev) =>
+              prev.map((v, idx) => (idx === item.idx ? { ...v, progress, bytesUploaded } : v)),
+            )
+            inProgressBytes.set(key, bytesUploaded)
+            updateStats()
+          },
+          (uploadId) => {
+            // Chunks sent — now assembling file on server
+            inProgressBytes.set(key, item.file.size)
+            updateStats()
+            setVideos((prev) =>
+              prev.map((v, idx) =>
+                idx === item.idx ? { ...v, status: 'processing', progress: 100, uploadId } : v,
+              ),
+            )
+          },
+        )
 
         completedBytes += item.file.size
         filesDone++
@@ -368,8 +395,12 @@ export const BulkUploadPanel = () => {
 
     setIsUploading(false)
     setPhotos((prev) => prev.filter((p) => p.status === 'error'))
-    setVideos((prev) => prev.filter((v) => v.status === 'error'))
     fetchExistingFiles()
+
+    // Keep done/error videos visible for 4s so success message is seen
+    setTimeout(() => {
+      setVideos((prev) => prev.filter((v) => v.status === 'error'))
+    }, 4000)
   }
 
   if (!id) {
@@ -390,6 +421,7 @@ export const BulkUploadPanel = () => {
 
   return (
     <div style={styles.container}>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {/* Existing files section */}
       {existingFiles.length > 0 && (
         <div style={{ marginBottom: '20px' }}>
@@ -546,7 +578,6 @@ export const BulkUploadPanel = () => {
               ))}
             </div>
           </div>
-          <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
         </div>
       )}
 
@@ -652,20 +683,39 @@ export const BulkUploadPanel = () => {
           ))}
 
           {videos.length > 0 && (
-            <div style={{ ...styles.sectionHeader, marginTop: photos.length > 0 ? '8px' : '0', marginBottom: videos.some((v) => v.status === 'error') ? '4px' : '0' }}>
-              <span style={styles.sectionTitle}>
-                Filmy ({videos.length}) - {formatSize(totalVideoSize)}
-              </span>
-              {!isUploading && (
-                <button type="button" onClick={() => setVideos([])} style={styles.clearBtn}>Wyczysc</button>
-              )}
-            </div>
+            <>
+              <div style={{ ...styles.sectionHeader, marginTop: photos.length > 0 ? '8px' : '0' }}>
+                <span style={styles.sectionTitle}>
+                  Filmy ({videos.length}) - {formatSize(totalVideoSize)}
+                </span>
+                {!isUploading && (
+                  <button type="button" onClick={() => setVideos([])} style={styles.clearBtn}>Wyczysc</button>
+                )}
+              </div>
+              {videos.map((video, i) => (
+                <div key={`video-status-${i}`} style={styles.videoStatusRow}>
+                  <span style={styles.videoStatusName}>{video.file.name}</span>
+                  <span style={{ fontSize: '12px', color: '#999', flexShrink: 0 }}>{formatSize(video.file.size)}</span>
+                  {video.status === 'processing' && (
+                    <span style={styles.videoStatusProcessing}>
+                      <span style={styles.spinner} /> {'\u0141\u0105czenie pliku...'}
+                    </span>
+                  )}
+                  {video.status === 'done' && (
+                    <span style={styles.videoStatusDone}>{'Film zosta\u0142 pomy\u015Blnie wgrany!'}</span>
+                  )}
+                  {video.status === 'error' && (
+                    <span style={styles.videoStatusError}>{video.error}</span>
+                  )}
+                  {video.status === 'uploading' && (
+                    <span style={{ fontSize: '12px', color: '#826D4C', flexShrink: 0 }}>
+                      {Math.round(video.progress)}%
+                    </span>
+                  )}
+                </div>
+              ))}
+            </>
           )}
-          {videos.filter((v) => v.status === 'error').map((video, i) => (
-            <div key={`video-err-${i}`} style={{ fontSize: '12px', color: '#ef4444', padding: '2px 0' }}>
-              {video.file.name}: {video.error}
-            </div>
-          ))}
 
           {pendingCount > 0 && (
             <div style={{ marginTop: '12px', textAlign: 'right' as const }}>
@@ -849,6 +899,55 @@ const styles: Record<string, React.CSSProperties> = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
     flex: 1,
+  },
+  videoStatusRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 0',
+    borderBottom: '1px solid #f3f4f6',
+    fontSize: '13px',
+  },
+  videoStatusName: {
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+    color: '#333',
+  },
+  videoStatusProcessing: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '12px',
+    color: '#826D4C',
+    fontWeight: 500,
+    flexShrink: 0,
+  },
+  videoStatusDone: {
+    fontSize: '12px',
+    color: '#16a34a',
+    fontWeight: 600,
+    flexShrink: 0,
+  },
+  videoStatusError: {
+    fontSize: '12px',
+    color: '#ef4444',
+    flexShrink: 0,
+    maxWidth: '50%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
+  spinner: {
+    display: 'inline-block',
+    width: '14px',
+    height: '14px',
+    border: '2px solid #e5e7eb',
+    borderTopColor: '#826D4C',
+    borderRadius: '50%',
+    animation: 'spin 0.8s linear infinite',
+    flexShrink: 0,
   },
 }
 

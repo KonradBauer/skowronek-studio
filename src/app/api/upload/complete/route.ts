@@ -96,11 +96,9 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Large files (>1GB): stream chunks to disk without loading all into memory
-    const uploadDir = path.resolve('uploads', 'client-files')
-    await mkdir(uploadDir, { recursive: true })
-    const destPath = path.join(uploadDir, uniqueName)
-    const writeStream = createWriteStream(destPath)
+    // Large files (>1GB): assemble chunks to temp file, let Payload handle via filePath
+    const assembledPath = path.join(tmpDir, uniqueName)
+    const writeStream = createWriteStream(assembledPath)
 
     for (const chunkFile of chunkFiles) {
       const chunkPath = path.join(tmpDir, chunkFile)
@@ -112,32 +110,29 @@ export async function POST(req: NextRequest) {
       writeStream.on('error', reject)
     })
 
-    // Create Payload document with file metadata (file already on disk)
+    // Use filePath so Payload reads the file, detects MIME, and writes it to staticDir
     const doc = await payload.create({
       collection: 'client-files',
       data: {
         client: Number(clientId),
         category: fileCategory,
       },
-      file: {
-        data: Buffer.alloc(0),
-        name: uniqueName,
-        mimetype: mimeType,
-        size: totalSize,
-      },
+      filePath: assembledPath,
     })
 
     await rm(tmpDir, { recursive: true, force: true })
 
+    const savedFilename = doc.filename || uniqueName
+
     if (mimeType.startsWith('video/')) {
-      generateVideoThumbnailForDoc(doc.id, uniqueName).catch(console.error)
-      transcodeToHLS(doc.id, uniqueName).catch(console.error)
+      generateVideoThumbnailForDoc(doc.id, savedFilename).catch(console.error)
+      transcodeToHLS(doc.id, savedFilename).catch(console.error)
     }
 
     return NextResponse.json({
       success: true,
       fileId: doc.id,
-      filename: uniqueName,
+      filename: savedFilename,
       size: totalSize,
     })
   } catch (err) {
