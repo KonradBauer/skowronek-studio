@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import path from 'path'
-import { access, stat } from 'fs/promises'
+import { access, stat, readFile } from 'fs/promises'
 import { createReadStream } from 'fs'
 import { Readable } from 'stream'
 
@@ -157,11 +157,10 @@ export async function GET(
     })
   }
 
-  // No range - return full file with Accept-Ranges header
-  const nodeStream = createReadStream(fullPath)
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream
+  // No range - return full file as buffer so Content-Length is preserved
+  const buffer = await readFile(fullPath)
 
-  return new NextResponse(webStream, {
+  return new NextResponse(buffer, {
     headers: {
       'Content-Type': mimeType,
       'Content-Length': String(fileSize),
