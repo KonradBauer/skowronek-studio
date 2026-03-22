@@ -40,7 +40,8 @@ function formatTotalSize(bytes: number): string {
 const PAGE_SIZE = 30
 
 export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridProps) {
-  const [downloading, setDownloading] = useState(false)
+  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'generating' | 'downloading' | 'error'>('idle')
+  const [downloadedBytes, setDownloadedBytes] = useState(0)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -110,16 +111,34 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
   }, [lightboxId, navigateLightbox])
 
   async function handleDownloadZip() {
-    setDownloading(true)
+    setDownloadStatus('generating')
+    setDownloadedBytes(0)
     try {
       const res = await fetch('/api/client/download-zip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category: 'photo' }),
       })
-      if (!res.ok) return
+      if (!res.ok || !res.body) {
+        setDownloadStatus('error')
+        return
+      }
 
-      const blob = await res.blob()
+      setDownloadStatus('downloading')
+
+      const reader = res.body.getReader()
+      const chunks: Uint8Array[] = []
+      let received = 0
+
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        chunks.push(value)
+        received += value.length
+        setDownloadedBytes(received)
+      }
+
+      const blob = new Blob(chunks as BlobPart[], { type: 'application/zip' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -128,9 +147,11 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } finally {
-      setDownloading(false)
+    } catch {
+      setDownloadStatus('error')
+      return
     }
+    setDownloadStatus('idle')
   }
 
   return (
@@ -144,8 +165,27 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
             {formatTotalSize(totalSize)}
           </p>
         </div>
-        <Button onClick={handleDownloadZip} disabled={downloading}>
-          {downloading ? 'Przygotowywanie ZIP...' : 'Pobierz wszystkie'}
+        <Button onClick={handleDownloadZip} disabled={downloadStatus !== 'idle' && downloadStatus !== 'error'}>
+          {downloadStatus === 'generating' && (
+            <>
+              <svg className="mr-2 inline h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Generowanie ZIP...
+            </>
+          )}
+          {downloadStatus === 'downloading' && (
+            <>
+              <svg className="mr-2 inline h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Pobieranie... {formatTotalSize(downloadedBytes)}
+            </>
+          )}
+          {downloadStatus === 'error' && 'Blad — sprobuj ponownie'}
+          {downloadStatus === 'idle' && 'Pobierz wszystkie'}
         </Button>
       </div>
 

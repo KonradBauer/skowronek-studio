@@ -4,8 +4,10 @@ import config from '@payload-config'
 import archiver from 'archiver'
 import path from 'path'
 import { createReadStream } from 'fs'
-import { access, readFile, stat } from 'fs/promises'
+import { access } from 'fs/promises'
 import { PassThrough, Readable } from 'stream'
+
+export const maxDuration = 600
 
 export async function POST(req: NextRequest) {
   const payload = await getPayload({ config })
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const clientUser = user as unknown as { id: number; collection?: string; expiresAt?: string; name?: string }
+  const clientUser = user as unknown as { id: number; collection?: string; expiresAt?: string }
   if (clientUser.collection !== 'clients') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -34,7 +36,6 @@ export async function POST(req: NextRequest) {
 
   const { category } = await req.json() as { category: 'photo' | 'video' | 'all' }
 
-  // Fetch all files for this client, filtered by category
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { client: { equals: Number(clientUser.id) } }
   if (category !== 'all') {
@@ -54,54 +55,20 @@ export async function POST(req: NextRequest) {
 
   const zipName = category === 'video' ? 'Film.zip' : category === 'photo' ? 'Zdjecia.zip' : 'Pliki.zip'
 
-  // Check for pre-generated ZIP
-  const cached = await payload.find({
-    collection: 'zip-cache',
-    where: {
-      client: { equals: Number(clientUser.id) },
-      category: { equals: category },
-      status: { equals: 'ready' },
-    },
-    limit: 1,
-  })
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cachedDoc = cached.docs[0] as any
-  if (cachedDoc?.zipFilename) {
-    const zipPath = path.resolve('uploads', 'zips', cachedDoc.zipFilename)
-    try {
-      await access(zipPath)
-      const zipStat = await stat(zipPath)
-      const buffer = await readFile(zipPath)
-      return new NextResponse(buffer, {
-        headers: {
-          'Content-Type': 'application/zip',
-          'Content-Disposition': `attachment; filename="${zipName}"`,
-          'Content-Length': String(zipStat.size),
-        },
-      })
-    } catch {
-      // Cached ZIP file missing, fall through to on-the-fly generation
-    }
-  }
-
-  // Create archive stream (fallback: on-the-fly)
-  const archive = archiver('zip', { zlib: { level: 1 } }) // level 1 = fast compression (photos/videos are already compressed)
+  // Generate ZIP on-the-fly and stream to client
+  const archive = archiver('zip', { zlib: { level: 0 } }) // level 0 = store only (photos/videos already compressed)
   const passThrough = new PassThrough()
-
   archive.pipe(passThrough)
 
-  // Add files to archive
   for (const doc of filesResult.docs) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fileDoc = doc as any
     const filename = String(fileDoc.filename || '')
     if (!filename) continue
 
-    const originalName = String(fileDoc.displayName || fileDoc.filename || 'plik')
+    const entryName = String(fileDoc.displayName || fileDoc.filename || 'plik')
 
     if (process.env.S3_BUCKET) {
-      // S3 mode - fetch and pipe
       const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
       const s3 = new S3Client({
         endpoint: process.env.S3_ENDPOINT,
@@ -112,22 +79,18 @@ export async function POST(req: NextRequest) {
         },
         forcePathStyle: true,
       })
-
       const response = await s3.send(new GetObjectCommand({
         Bucket: process.env.S3_BUCKET,
         Key: `client-files/${filename}`,
       }))
-
       if (response.Body) {
-        const bodyStream = response.Body as unknown as Readable
-        archive.append(bodyStream, { name: originalName })
+        archive.append(response.Body as unknown as Readable, { name: entryName })
       }
     } else {
-      // Local mode
       const filePath = path.resolve('uploads', 'client-files', filename)
       try {
         await access(filePath)
-        archive.append(createReadStream(filePath), { name: originalName })
+        archive.append(createReadStream(filePath), { name: entryName })
       } catch {
         // Skip missing files
       }

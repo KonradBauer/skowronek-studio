@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { mkdir } from 'fs/promises'
+import { mkdir, readdir, stat, rm } from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
 
@@ -33,6 +33,21 @@ export async function POST(req: NextRequest) {
   if (!client) {
     return NextResponse.json({ error: 'Klient nie znaleziony' }, { status: 404 })
   }
+
+  // Cleanup orphaned tmp directories older than 1 hour
+  const tmpBase = path.resolve('uploads', 'tmp')
+  try {
+    const dirs = await readdir(tmpBase)
+    const cutoff = Date.now() - 60 * 60 * 1000
+    for (const dir of dirs) {
+      try {
+        const dirStat = await stat(path.join(tmpBase, dir))
+        if (dirStat.mtimeMs < cutoff) {
+          rm(path.join(tmpBase, dir), { recursive: true, force: true }).catch(() => {})
+        }
+      } catch { /* ignore */ }
+    }
+  } catch { /* tmp dir may not exist yet */ }
 
   // Generate unique upload ID
   const uploadId = crypto.randomUUID()

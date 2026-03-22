@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { invalidateZipCache } from '@/lib/zip-generator'
+import { rm } from 'fs/promises'
+import path from 'path'
 
 export const ClientFiles: CollectionConfig = {
   slug: 'client-files',
@@ -7,9 +9,7 @@ export const ClientFiles: CollectionConfig = {
   upload: {
     mimeTypes: ['image/*', 'video/*'],
     staticDir: 'uploads/client-files',
-    imageSizes: [
-      { name: 'thumbnail', width: 400, height: 400, position: 'centre' },
-    ],
+    imageSizes: [],
   },
   admin: {
     useAsTitle: 'filename',
@@ -106,6 +106,19 @@ export const ClientFiles: CollectionConfig = {
         if (clientId) {
           invalidateZipCache(req.payload, clientId, doc.category || 'photo').catch(console.error)
         }
+
+        // Cleanup video thumbnail
+        if (doc.videoThumbnail) {
+          const thumbPath = path.resolve('uploads', 'client-files', doc.videoThumbnail)
+          rm(thumbPath, { force: true }).catch(() => {})
+        }
+
+        // Cleanup HLS transcoded files
+        if (doc.hlsPath || doc.hlsStatus === 'ready') {
+          const hlsDir = path.resolve('uploads', 'hls', String(doc.id))
+          rm(hlsDir, { recursive: true, force: true }).catch(() => {})
+        }
+
       },
     ],
   },

@@ -1,4 +1,6 @@
 import type { Payload } from 'payload'
+import { readdir, rm, stat } from 'fs/promises'
+import path from 'path'
 
 interface CleanupResult {
   processed: number
@@ -57,6 +59,22 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
       result.errors.push(`Client ${client.id}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
+
+  // Cleanup orphaned tmp directories (older than 1 hour)
+  try {
+    const tmpBase = path.resolve('uploads', 'tmp')
+    const dirs = await readdir(tmpBase).catch(() => [] as string[])
+    const cutoff = Date.now() - 60 * 60 * 1000
+    for (const dir of dirs) {
+      try {
+        const dirPath = path.join(tmpBase, dir)
+        const dirStat = await stat(dirPath)
+        if (dirStat.mtimeMs < cutoff) {
+          await rm(dirPath, { recursive: true, force: true })
+        }
+      } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
 
   return result
 }
