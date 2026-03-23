@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
@@ -11,18 +12,6 @@ function Spinner() {
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
-  )
-}
-
-function SkeletonGrid({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={`skeleton-${i}`} className="relative flex aspect-square items-center justify-center bg-cream">
-          <Spinner />
-        </div>
-      ))}
-    </>
   )
 }
 
@@ -50,7 +39,6 @@ const LazyPhoto = memo(function LazyPhoto({
         alt={photo.displayName || photo.filename}
         fill
         className={`relative z-10 object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        loading="lazy"
         onLoad={() => setLoaded(true)}
         unoptimized
       />
@@ -79,13 +67,35 @@ function formatTotalSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
+function useColumns() {
+  const [columns, setColumns] = useState(3)
+
+  useEffect(() => {
+    function update() {
+      const w = window.innerWidth
+      if (w >= 1024) setColumns(6)      // lg
+      else if (w >= 768) setColumns(5)   // md
+      else if (w >= 640) setColumns(4)   // sm
+      else setColumns(3)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  return columns
+}
+
 const PAGE_SIZE = 30
+const GAP = 6 // gap-1.5 = 0.375rem = 6px
 
 export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridProps) {
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'generating' | 'downloading' | 'error'>('idle')
   const [downloadedBytes, setDownloadedBytes] = useState(0)
   const [lightboxId, setLightboxId] = useState<string | null>(null)
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const columns = useColumns()
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['photos'],
@@ -104,23 +114,55 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
 
   const allPhotos = data?.pages.flatMap((p) => p.docs) ?? initialPhotos
 
-  // Intersection Observer for infinite scroll
+  const rowCount = Math.ceil(allPhotos.length / columns)
+
+  // Estimate row height: square aspect ratio based on container width
+  const estimateSize = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return 200
+    const containerWidth = container.clientWidth
+    const itemWidth = (containerWidth - GAP * (columns - 1)) / columns
+    return itemWidth + GAP // item height + gap
+  }, [columns])
+
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize,
+    overscan: 3,
+  })
+
+  // Prefetch next page 1 ahead of what's visible
+  const virtualItems = virtualizer.getVirtualItems()
+  const pagesLoaded = data?.pages.length ?? 1
+
   useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
+    if (!hasNextPage || isFetchingNextPage) return
+    const lastVisibleRow = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1].index : 0
+    const photosVisible = (lastVisibleRow + 1) * columns
+    const pagesNeeded = Math.ceil(photosVisible / PAGE_SIZE)
+    // Always keep 1 page prefetched ahead of what's currently needed
+    if (pagesLoaded <= pagesNeeded) {
+      fetchNextPage()
+    }
+  }, [virtualItems, pagesLoaded, columns, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { rootMargin: '400px' },
-    )
+  // Recalculate sizes when columns change
+  const measureRef = useRef(virtualizer.measure)
+  measureRef.current = virtualizer.measure
 
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+  useEffect(() => {
+    measureRef.current()
+  }, [columns])
+
+  // Rows grouped by columns
+  const getRowPhotos = useCallback(
+    (rowIndex: number) => {
+      const start = rowIndex * columns
+      return allPhotos.slice(start, start + columns)
+    },
+    [allPhotos, columns],
+  )
 
   // Lightbox
   const lightboxPhoto = lightboxId ? allPhotos.find((p) => p.id === lightboxId) : null
@@ -132,7 +174,6 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
       const newIndex = idx + dir
       if (newIndex >= 0 && newIndex < allPhotos.length) {
         setLightboxId(allPhotos[newIndex].id)
-        // Prefetch next page when nearing end of loaded photos
         if (newIndex >= allPhotos.length - 5 && hasNextPage && !isFetchingNextPage) {
           fetchNextPage()
         }
@@ -231,26 +272,48 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
         </Button>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-        {allPhotos.map((photo) => (
-          <LazyPhoto
-            key={photo.id}
-            photo={photo}
-            onClick={() => setLightboxId(photo.id)}
-          />
-        ))}
+      {/* Virtualized Grid */}
+      <div
+        ref={scrollContainerRef}
+        className="h-[calc(100vh-200px)] overflow-y-auto"
+      >
+        <div
+          className="relative w-full"
+          style={{ height: virtualizer.getTotalSize() }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const rowPhotos = getRowPhotos(virtualRow.index)
+            return (
+              <div
+                key={virtualRow.index}
+                className="absolute left-0 top-0 grid w-full gap-1.5"
+                data-columns={columns}
+                style={{
+                  height: virtualRow.size - GAP,
+                  transform: `translateY(${virtualRow.start}px)`,
+                  gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                }}
+              >
+                {rowPhotos.map((photo) => (
+                  <LazyPhoto
+                    key={photo.id}
+                    photo={photo}
+                    onClick={() => setLightboxId(photo.id)}
+                  />
+                ))}
+              </div>
+            )
+          })}
+        </div>
+
       </div>
 
-      {/* Skeleton placeholders while fetching next page */}
+      {/* Loading indicator */}
       {isFetchingNextPage && (
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-          <SkeletonGrid count={PAGE_SIZE} />
+        <div className="flex items-center justify-center py-8">
+          <Spinner />
         </div>
       )}
-
-      {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} className="h-px" />
 
       {/* Lightbox */}
       {lightboxPhoto && (
@@ -284,7 +347,7 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
           )}
 
           {/* Next */}
-          {lightboxIndex < totalCount - 1 && (
+          {lightboxIndex < allPhotos.length - 1 && (
             <button
               onClick={(e) => {
                 e.stopPropagation()

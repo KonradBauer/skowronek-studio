@@ -144,8 +144,9 @@ export async function GET(
       }
     }
 
+    let fileStat
     try {
-      await access(filePath)
+      fileStat = await stat(filePath)
     } catch {
       return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
     }
@@ -156,19 +157,19 @@ export async function GET(
     return new NextResponse(webStream, {
       headers: {
         'Content-Type': mimeType,
+        'Content-Length': String(fileStat.size),
         'Cache-Control': 'private, max-age=86400',
       },
     })
   }
 
   // Video streaming with range request support
+  let fileStat
   try {
-    await access(fullPath)
+    fileStat = await stat(fullPath)
   } catch {
     return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
   }
-
-  const fileStat = await stat(fullPath)
   const fileSize = fileStat.size
   const rangeHeader = req.headers.get('range')
 
