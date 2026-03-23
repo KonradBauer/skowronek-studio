@@ -2,9 +2,71 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import path from 'path'
-import { access, stat, readFile } from 'fs/promises'
+import { access, stat, readFile, writeFile, mkdir, readdir, unlink } from 'fs/promises'
 import { createReadStream } from 'fs'
 import { Readable } from 'stream'
+import sharp from 'sharp'
+
+const CACHE_DIR = path.resolve('uploads', 'client-files', '.cache')
+const CACHE_MAX_AGE_MS = 60 * 60 * 1000 // 1 hour
+
+// Cleanup expired cache files — runs at most once per 10 minutes
+let lastCleanup = 0
+async function cleanupCache() {
+  const now = Date.now()
+  if (now - lastCleanup < 10 * 60 * 1000) return
+  lastCleanup = now
+
+  try {
+    const files = await readdir(CACHE_DIR)
+    await Promise.all(
+      files.map(async (file) => {
+        const filePath = path.join(CACHE_DIR, file)
+        try {
+          const fileStat = await stat(filePath)
+          if (now - fileStat.mtimeMs > CACHE_MAX_AGE_MS) {
+            await unlink(filePath)
+          }
+        } catch {}
+      }),
+    )
+  } catch {}
+}
+
+// Cached sharp resize — generates optimized version on first request, serves from disk after
+async function getOrCreateOptimized(
+  sourcePath: string,
+  cachePath: string,
+  maxSize: number,
+  quality: number,
+): Promise<Buffer> {
+  // Serve from cache if fresh
+  try {
+    const fileStat = await stat(cachePath)
+    if (Date.now() - fileStat.mtimeMs < CACHE_MAX_AGE_MS) {
+      return await readFile(cachePath)
+    }
+  } catch {
+    // Not cached yet
+  }
+
+  // Generate optimized version
+  const source = await readFile(sourcePath)
+  const optimized = await sharp(source)
+    .resize(maxSize, maxSize, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality, mozjpeg: true })
+    .toBuffer()
+
+  // Cache to disk (fire and forget)
+  mkdir(path.dirname(cachePath), { recursive: true })
+    .then(() => writeFile(cachePath, optimized))
+    .catch(() => {})
+
+  // Trigger cleanup in background
+  cleanupCache()
+
+  return optimized
+}
 
 export async function GET(
   req: NextRequest,
@@ -90,7 +152,7 @@ export async function GET(
         return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'image/jpeg',
-            'Cache-Control': 'private, max-age=86400',
+            'Cache-Control': 'private, max-age=86400, immutable',
           },
         })
       } catch {
@@ -126,39 +188,60 @@ export async function GET(
   // Local mode
   const fullPath = path.resolve('uploads', 'client-files', filename)
 
-  // For images, try thumbnail first
+  // Image with size parameter — serve optimized version via sharp
   if (isImage) {
-    const wantsThumbnail = req.nextUrl.searchParams.get('size') === 'thumbnail'
-    const ext = path.extname(filename)
-    const base = path.basename(filename, ext)
-    const thumbnailName = `${base}-400x400${ext}`
-    const thumbnailPath = path.resolve('uploads', 'client-files', thumbnailName)
+    const size = req.nextUrl.searchParams.get('size')
+    const base = path.basename(filename, path.extname(filename))
+    const cacheDir = path.resolve('uploads', 'client-files', '.cache')
 
-    let filePath = fullPath
-    if (wantsThumbnail) {
+    if (size === 'thumbnail') {
+      // 400px, JPEG quality 50 — small and fast for grid
       try {
-        await access(thumbnailPath)
-        filePath = thumbnailPath
+        const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-thumb.jpg`), 400, 50)
+        return new NextResponse(new Uint8Array(buffer), {
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': String(buffer.length),
+            'Cache-Control': 'private, max-age=86400, immutable',
+          },
+        })
       } catch {
-        // Thumbnail doesn't exist, serve full image
+        return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
       }
     }
 
+    if (size === 'medium') {
+      // 1920px, JPEG quality 70 — good enough for lightbox viewing
+      try {
+        const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-medium.jpg`), 1920, 70)
+        return new NextResponse(new Uint8Array(buffer), {
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': String(buffer.length),
+            'Cache-Control': 'private, max-age=86400, immutable',
+          },
+        })
+      } catch {
+        return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
+      }
+    }
+
+    // No size param — serve original full quality
     let fileStat
     try {
-      fileStat = await stat(filePath)
+      fileStat = await stat(fullPath)
     } catch {
       return NextResponse.json({ error: 'File not found on disk' }, { status: 404 })
     }
 
-    const nodeStream = createReadStream(filePath)
+    const nodeStream = createReadStream(fullPath)
     const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
     return new NextResponse(webStream, {
       headers: {
         'Content-Type': mimeType,
         'Content-Length': String(fileStat.size),
-        'Cache-Control': 'private, max-age=86400',
+        'Cache-Control': 'private, max-age=86400, immutable',
       },
     })
   }
@@ -180,7 +263,7 @@ export async function GET(
     }
 
     const start = parseInt(match[1], 10)
-    const end = match[2] ? parseInt(match[2], 10) : Math.min(start + 5 * 1024 * 1024 - 1, fileSize - 1) // 5MB chunks
+    const end = match[2] ? parseInt(match[2], 10) : Math.min(start + 5 * 1024 * 1024 - 1, fileSize - 1)
     const chunkSize = end - start + 1
 
     const nodeStream = createReadStream(fullPath, { start, end })
@@ -193,12 +276,12 @@ export async function GET(
         'Content-Range': `bytes ${start}-${end}/${fileSize}`,
         'Content-Length': String(chunkSize),
         'Accept-Ranges': 'bytes',
-        'Cache-Control': 'private, max-age=86400',
+        'Cache-Control': 'private, max-age=86400, immutable',
       },
     })
   }
 
-  // No range - return full file as buffer so Content-Length is preserved
+  // No range - return full file
   const buffer = await readFile(fullPath)
 
   return new NextResponse(buffer, {
@@ -206,7 +289,7 @@ export async function GET(
       'Content-Type': mimeType,
       'Content-Length': String(fileSize),
       'Accept-Ranges': 'bytes',
-      'Cache-Control': 'private, max-age=86400',
+      'Cache-Control': 'private, max-age=86400, immutable',
     },
   })
 }

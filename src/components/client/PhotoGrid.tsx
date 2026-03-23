@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import Image from 'next/image'
+import Lightbox from 'yet-another-react-lightbox'
+import Counter from 'yet-another-react-lightbox/plugins/counter'
+import Zoom from 'yet-another-react-lightbox/plugins/zoom'
+import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
+import 'yet-another-react-lightbox/styles.css'
+import 'yet-another-react-lightbox/plugins/counter.css'
 import { Button } from '@/components/ui/Button'
 
 function Spinner() {
@@ -13,6 +19,22 @@ function Spinner() {
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
   )
+}
+
+// Preload a batch of thumbnails into browser cache, resolve when ALL are done
+function preloadThumbnails(photos: FileData[]): Promise<void> {
+  if (photos.length === 0) return Promise.resolve()
+  return new Promise((resolve) => {
+    let loaded = 0
+    photos.forEach((photo) => {
+      const img = new window.Image()
+      img.onload = img.onerror = () => {
+        loaded++
+        if (loaded >= photos.length) resolve()
+      }
+      img.src = `/api/client/preview/${photo.id}?size=thumbnail`
+    })
+  })
 }
 
 const LazyPhoto = memo(function LazyPhoto({
@@ -30,7 +52,7 @@ const LazyPhoto = memo(function LazyPhoto({
       className="group relative aspect-square overflow-hidden bg-cream"
     >
       {!loaded && (
-        <div className="absolute inset-0 z-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center">
           <Spinner />
         </div>
       )}
@@ -38,11 +60,11 @@ const LazyPhoto = memo(function LazyPhoto({
         src={`/api/client/preview/${photo.id}?size=thumbnail`}
         alt={photo.displayName || photo.filename}
         fill
-        className={`relative z-10 object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setLoaded(true)}
+        className={`object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         unoptimized
+        onLoad={() => setLoaded(true)}
       />
-      <div className="pointer-events-none absolute inset-0 z-20 bg-black/0 transition-colors group-hover:bg-black/10" />
+      <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
     </button>
   )
 })
@@ -68,14 +90,14 @@ function formatTotalSize(bytes: number): string {
 }
 
 function useColumns() {
-  const [columns, setColumns] = useState(3)
+  const [columns, setColumns] = useState(6)
 
   useEffect(() => {
     function update() {
       const w = window.innerWidth
-      if (w >= 1024) setColumns(6)      // lg
-      else if (w >= 768) setColumns(5)   // md
-      else if (w >= 640) setColumns(4)   // sm
+      if (w >= 1024) setColumns(6)
+      else if (w >= 768) setColumns(5)
+      else if (w >= 640) setColumns(4)
       else setColumns(3)
     }
     update()
@@ -86,16 +108,40 @@ function useColumns() {
   return columns
 }
 
+function useRowHeight(columns: number) {
+  const [height, setHeight] = useState(160)
+
+  useEffect(() => {
+    function update() {
+      const containerWidth = Math.min(window.innerWidth - 48, 1024)
+      const gap = 6
+      const itemWidth = (containerWidth - gap * (columns - 1)) / columns
+      setHeight(itemWidth + gap)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [columns])
+
+  return height
+}
+
 const PAGE_SIZE = 30
-const GAP = 6 // gap-1.5 = 0.375rem = 6px
 
 export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridProps) {
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'generating' | 'downloading' | 'error'>('idle')
   const [downloadedBytes, setDownloadedBytes] = useState(0)
-  const [lightboxId, setLightboxId] = useState<string | null>(null)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [lightboxIndex, setLightboxIndex] = useState(-1)
+  const [firstPageReady, setFirstPageReady] = useState(false)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   const columns = useColumns()
+  const rowHeight = useRowHeight(columns)
+
+  // Preload first page — show grid only when fully loaded
+  useEffect(() => {
+    preloadThumbnails(initialPhotos).then(() => setFirstPageReady(true))
+  }, [initialPhotos])
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['photos'],
@@ -113,27 +159,18 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
   })
 
   const allPhotos = data?.pages.flatMap((p) => p.docs) ?? initialPhotos
-
   const rowCount = Math.ceil(allPhotos.length / columns)
 
-  // Estimate row height: square aspect ratio based on container width
-  const estimateSize = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return 200
-    const containerWidth = container.clientWidth
-    const itemWidth = (containerWidth - GAP * (columns - 1)) / columns
-    return itemWidth + GAP // item height + gap
-  }, [columns])
-
-  const virtualizer = useVirtualizer({
+  const virtualizer = useWindowVirtualizer({
     count: rowCount,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize,
+    estimateSize: () => rowHeight,
     overscan: 3,
+    scrollMargin: gridRef.current?.offsetTop ?? 0,
   })
 
-  // Prefetch next page 1 ahead of what's visible
   const virtualItems = virtualizer.getVirtualItems()
+
+  // Prefetch next page of data 1 ahead of what's visible
   const pagesLoaded = data?.pages.length ?? 1
 
   useEffect(() => {
@@ -141,57 +178,48 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
     const lastVisibleRow = virtualItems.length > 0 ? virtualItems[virtualItems.length - 1].index : 0
     const photosVisible = (lastVisibleRow + 1) * columns
     const pagesNeeded = Math.ceil(photosVisible / PAGE_SIZE)
-    // Always keep 1 page prefetched ahead of what's currently needed
     if (pagesLoaded <= pagesNeeded) {
       fetchNextPage()
     }
   }, [virtualItems, pagesLoaded, columns, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  // Recalculate sizes when columns change
+  // Preload thumbnails for each newly fetched page in background
+  const preloadedPagesRef = useRef(1)
+
+  useEffect(() => {
+    const pages = data?.pages ?? []
+    if (pages.length <= preloadedPagesRef.current) return
+
+    const newPages = pages.slice(preloadedPagesRef.current)
+    preloadedPagesRef.current = pages.length
+
+    newPages.forEach((page) => preloadThumbnails(page.docs))
+  }, [data?.pages])
+
+  // Re-measure when row height changes
   const measureRef = useRef(virtualizer.measure)
   measureRef.current = virtualizer.measure
 
   useEffect(() => {
     measureRef.current()
-  }, [columns])
+  }, [rowHeight])
 
-  // Rows grouped by columns
-  const getRowPhotos = useCallback(
-    (rowIndex: number) => {
-      const start = rowIndex * columns
-      return allPhotos.slice(start, start + columns)
-    },
-    [allPhotos, columns],
-  )
+  // Lightbox — medium quality for viewing, full quality only in ZIP download
+  const lightboxSlides = allPhotos.map((p) => ({
+    src: `/api/client/preview/${p.id}?size=medium`,
+    alt: p.displayName || p.filename,
+    title: p.displayName || p.filename,
+  }))
 
-  // Lightbox
-  const lightboxPhoto = lightboxId ? allPhotos.find((p) => p.id === lightboxId) : null
-  const lightboxIndex = lightboxId ? allPhotos.findIndex((p) => p.id === lightboxId) : -1
-
-  const navigateLightbox = useCallback(
-    (dir: -1 | 1) => {
-      const idx = lightboxId ? allPhotos.findIndex((p) => p.id === lightboxId) : -1
-      const newIndex = idx + dir
-      if (newIndex >= 0 && newIndex < allPhotos.length) {
-        setLightboxId(allPhotos[newIndex].id)
-        if (newIndex >= allPhotos.length - 5 && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
+  const handleLightboxView = useCallback(
+    (index: number) => {
+      setLightboxIndex(index)
+      if (index >= allPhotos.length - 5 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage()
       }
     },
-    [lightboxId, allPhotos, hasNextPage, isFetchingNextPage, fetchNextPage],
+    [allPhotos.length, hasNextPage, isFetchingNextPage, fetchNextPage],
   )
-
-  useEffect(() => {
-    if (!lightboxId) return
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') navigateLightbox(-1)
-      else if (e.key === 'ArrowRight') navigateLightbox(1)
-      else if (e.key === 'Escape') setLightboxId(null)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [lightboxId, navigateLightbox])
 
   async function handleDownloadZip() {
     setDownloadStatus('generating')
@@ -237,6 +265,18 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
     setDownloadStatus('idle')
   }
 
+  if (!firstPageReady) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <svg className="h-8 w-8 animate-spin text-primary/40" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <p className="mt-4 text-sm tracking-wide text-body-muted">Prosze czekac, ladowanie galerii...</p>
+      </div>
+    )
+  }
+
   return (
     <div>
       {/* Header */}
@@ -264,7 +304,7 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Pobieranie... {formatTotalSize(downloadedBytes)}
+              Pobieranie... {totalSize > 0 ? `${Math.min(100, Math.round((downloadedBytes / totalSize) * 100))}%` : formatTotalSize(downloadedBytes)}
             </>
           )}
           {downloadStatus === 'error' && 'Blad — sprobuj ponownie'}
@@ -272,40 +312,42 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
         </Button>
       </div>
 
+      {/* Tip */}
+      <div className="mb-6 border border-primary/15 bg-primary/5 px-5 py-3.5 text-sm leading-relaxed text-dark/70">
+        Dla najlepszego doświadczenia przeglądania zdjęć zalecamy pobranie ich na swój komputer klikając{' '}
+        <strong className="font-medium text-dark">&ldquo;Pobierz wszystkie&rdquo;</strong>.
+      </div>
+
       {/* Virtualized Grid */}
-      <div
-        ref={scrollContainerRef}
-        className="h-[calc(100vh-200px)] overflow-y-auto"
-      >
+      <div ref={gridRef}>
         <div
           className="relative w-full"
           style={{ height: virtualizer.getTotalSize() }}
         >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const rowPhotos = getRowPhotos(virtualRow.index)
+          {virtualItems.map((virtualRow) => {
+            const startIdx = virtualRow.index * columns
+            const rowPhotos = allPhotos.slice(startIdx, startIdx + columns)
             return (
               <div
                 key={virtualRow.index}
                 className="absolute left-0 top-0 grid w-full gap-1.5"
-                data-columns={columns}
                 style={{
-                  height: virtualRow.size - GAP,
-                  transform: `translateY(${virtualRow.start}px)`,
+                  height: virtualRow.size - 6,
+                  transform: `translateY(${virtualRow.start - (virtualizer.options.scrollMargin || 0)}px)`,
                   gridTemplateColumns: `repeat(${columns}, 1fr)`,
                 }}
               >
-                {rowPhotos.map((photo) => (
+                {rowPhotos.map((photo, colIdx) => (
                   <LazyPhoto
                     key={photo.id}
                     photo={photo}
-                    onClick={() => setLightboxId(photo.id)}
+                    onClick={() => setLightboxIndex(startIdx + colIdx)}
                   />
                 ))}
               </div>
             )
           })}
         </div>
-
       </div>
 
       {/* Loading indicator */}
@@ -316,68 +358,17 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
       )}
 
       {/* Lightbox */}
-      {lightboxPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-          onClick={() => setLightboxId(null)}
-        >
-          {/* Close */}
-          <button
-            onClick={() => setLightboxId(null)}
-            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center text-white/70 transition-colors hover:text-white"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-
-          {/* Prev */}
-          {lightboxIndex > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                navigateLightbox(-1)
-              }}
-              className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white/70 transition-colors hover:text-white"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-          )}
-
-          {/* Next */}
-          {lightboxIndex < allPhotos.length - 1 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                navigateLightbox(1)
-              }}
-              className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white/70 transition-colors hover:text-white"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          )}
-
-          {/* Image */}
-          <Image
-            src={`/api/client/preview/${lightboxPhoto.id}`}
-            alt={lightboxPhoto.displayName || lightboxPhoto.filename}
-            width={1200}
-            height={800}
-            className="max-h-[90vh] max-w-[90vw] object-contain"
-            onClick={(e) => e.stopPropagation()}
-            unoptimized
-          />
-
-          {/* Info bar */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded bg-black/60 px-4 py-2 text-sm text-white/80">
-            {lightboxPhoto.displayName || lightboxPhoto.filename} - {lightboxIndex + 1}/{totalCount}
-          </div>
-        </div>
-      )}
+      <Lightbox
+        open={lightboxIndex >= 0}
+        close={() => setLightboxIndex(-1)}
+        index={lightboxIndex}
+        slides={lightboxSlides}
+        on={{ view: ({ index }) => handleLightboxView(index) }}
+        plugins={[Counter, Zoom, Fullscreen]}
+        counter={{ container: { style: { top: 'unset', bottom: 0 } } }}
+        styles={{ container: { backgroundColor: 'rgba(0, 0, 0, 0.9)' } }}
+        carousel={{ preload: 2 }}
+      />
     </div>
   )
 }

@@ -68,6 +68,9 @@ importers:
       sharp:
         specifier: ^0.34.2
         version: 0.34.5
+      yet-another-react-lightbox:
+        specifier: ^3.29.2
+        version: 3.29.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       zustand:
         specifier: ^5.0.5
         version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
@@ -4396,6 +4399,20 @@ packages:
   yaml@1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
+
+  yet-another-react-lightbox@3.29.2:
+    resolution: {integrity: sha512-TMDHPn1uDOkrjEysoKCt1xsswGTcC2DPXHmjFUG1szWJ8ksu7bp+l67h/ZV27miA5hkSCLtqGzkHGTMOurce9w==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@types/react': ^16 || ^17 || ^18 || ^19
+      '@types/react-dom': ^16 || ^17 || ^18 || ^19
+      react: ^16.8.0 || ^17 || ^18 || ^19
+      react-dom: ^16.8.0 || ^17 || ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
 
   yjs@13.6.30:
     resolution: {integrity: sha512-vv/9h42eCMC81ZHDFswuu/MKzkl/vyq1BhaNGfHyOonwlG4CJbQF4oiBBJPvfdeCt/PlVDWh7Nov9D34YY09uQ==}
@@ -9554,6 +9571,14 @@ snapshots:
   xtend@4.0.2: {}
 
   yaml@1.10.2: {}
+
+  yet-another-react-lightbox@3.29.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+    optionalDependencies:
+      '@types/react': 19.2.14
+      '@types/react-dom': 19.2.3(@types/react@19.2.14)
 
   yjs@13.6.30:
     dependencies:

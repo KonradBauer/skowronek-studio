@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-const DEFAULT_EXPIRY_DAYS = 21
+const DEFAULT_EXPIRY_DAYS = 10
 
 function getDefaultExpiryDate(): string {
   const date = new Date()
