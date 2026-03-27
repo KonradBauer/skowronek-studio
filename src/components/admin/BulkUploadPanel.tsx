@@ -172,7 +172,6 @@ export const BulkUploadPanel = () => {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeletingAll, setIsDeletingAll] = useState(false)
   const [playingVideoId, setPlayingVideoId] = useState<number | null>(null)
-  const [visiblePhotoCount, setVisiblePhotoCount] = useState(0)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -181,20 +180,43 @@ export const BulkUploadPanel = () => {
     if (!id) return
     setLoadingFiles(true)
     try {
-      const res = await fetch(`/api/client-files?where[client][equals]=${id}&limit=500&sort=createdAt`)
-      if (res.ok) {
-        const data = await res.json()
-        setExistingFiles(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (data.docs || []).map((d: any) => ({
-            id: d.id,
-            filename: d.filename || '',
-            mimeType: d.mimeType || '',
-            filesize: d.filesize || 0,
-            category: d.category || 'photo',
-          })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapFile = (d: any): ExistingFile => ({
+        id: d.id,
+        filename: d.filename || '',
+        mimeType: d.mimeType || '',
+        filesize: d.filesize || 0,
+        category: d.category || 'photo',
+      })
+
+      // Fetch photos: paginate to get all (can be 1000+)
+      const allPhotos: ExistingFile[] = []
+      let page = 1
+      let hasMore = true
+      while (hasMore) {
+        const res = await fetch(
+          `/api/client-files?where[client][equals]=${id}&where[category][equals]=photo&limit=500&page=${page}&sort=createdAt`,
         )
+        if (!res.ok) break
+        const data = await res.json()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        allPhotos.push(...(data.docs || []).map(mapFile))
+        hasMore = data.hasNextPage || false
+        page++
       }
+
+      // Fetch videos separately (usually few, single request is enough)
+      const allVideos: ExistingFile[] = []
+      const videoRes = await fetch(
+        `/api/client-files?where[client][equals]=${id}&where[category][equals]=video&limit=100&sort=createdAt`,
+      )
+      if (videoRes.ok) {
+        const videoData = await videoRes.json()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        allVideos.push(...(videoData.docs || []).map(mapFile))
+      }
+
+      setExistingFiles([...allPhotos, ...allVideos])
     } catch {
       // ignore fetch errors
     }
@@ -452,54 +474,7 @@ export const BulkUploadPanel = () => {
                 <span style={styles.sectionTitle}>
                   Zdjecia ({existingPhotos.length}) - {formatSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
-                {visiblePhotoCount === 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setVisiblePhotoCount(100)}
-                    style={{ ...styles.selectBtn, padding: '4px 12px', fontSize: '12px' }}
-                  >
-                    Pokaz podglad
-                  </button>
-                )}
               </div>
-              {visiblePhotoCount > 0 && (
-                <>
-                  <div style={styles.existingGrid}>
-                    {existingPhotos.slice(0, visiblePhotoCount).map((file) => (
-                      <div key={file.id} style={styles.existingTile}>
-                        <img
-                          src={`/api/client-files/file/${file.filename}`}
-                          alt={file.filename}
-                          style={styles.existingThumb}
-                          loading="lazy"
-                        />
-                        <div style={styles.existingOverlay}>
-                          <span style={styles.existingName}>{file.filename}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFile(file.id)}
-                            disabled={deletingId === file.id}
-                            style={styles.deleteBtn}
-                          >
-                            {deletingId === file.id ? '...' : 'x'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {visiblePhotoCount < existingPhotos.length && (
-                    <div style={{ textAlign: 'center', marginTop: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setVisiblePhotoCount((prev) => prev + 100)}
-                        style={{ ...styles.selectBtn, padding: '6px 16px', fontSize: '12px' }}
-                      >
-                        Zaladuj wiecej ({Math.min(100, existingPhotos.length - visiblePhotoCount)} z {existingPhotos.length - visiblePhotoCount} pozostalych)
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
           )}
 
@@ -564,19 +539,7 @@ export const BulkUploadPanel = () => {
         <div style={{ marginBottom: '20px' }}>
           <h3 style={styles.title}>Wgrane pliki klienta</h3>
           <div style={styles.section}>
-            <div style={styles.existingGrid}>
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    ...styles.existingTile,
-                    background: 'linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%)',
-                    backgroundSize: '200% 100%',
-                    animation: 'shimmer 1.5s infinite',
-                  }}
-                />
-              ))}
-            </div>
+            <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>Ladowanie plikow...</div>
           </div>
         </div>
       )}
@@ -861,44 +824,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     fontWeight: 600,
     transition: 'opacity 0.2s',
-  },
-  existingGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-    gap: '8px',
-    maxHeight: '300px',
-    overflowY: 'auto' as const,
-  },
-  existingTile: {
-    position: 'relative' as const,
-    aspectRatio: '1',
-    overflow: 'hidden',
-    borderRadius: '4px',
-    background: '#f3f4f6',
-  },
-  existingThumb: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
-  },
-  existingOverlay: {
-    position: 'absolute' as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-    padding: '4px 6px',
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  existingName: {
-    fontSize: '10px',
-    color: 'white',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
-    flex: 1,
   },
   videoStatusRow: {
     display: 'flex',
