@@ -9,7 +9,7 @@ import { PassThrough, Readable } from 'stream'
 
 export const maxDuration = 600
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const payload = await getPayload({ config })
 
   const token = req.cookies.get('client-token')?.value
@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Account expired' }, { status: 403 })
   }
 
-  const { category } = await req.json() as { category: 'photo' | 'video' | 'all' }
+  const category = req.nextUrl.searchParams.get('category') as 'photo' | 'video' | 'all'
+  if (!category || !['photo', 'video', 'all'].includes(category)) {
+    return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { client: { equals: Number(clientUser.id) } }

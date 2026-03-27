@@ -40,31 +40,13 @@ export function FileList({ files }: FileListProps) {
   const other = files.filter((f) => !f.mimeType.startsWith('image/') && !f.mimeType.startsWith('video/'))
   const totalSize = files.reduce((sum, f) => sum + f.filesize, 0)
 
-  async function downloadFile(file: FileData) {
-    const res = await fetch(`/api/client/download/${file.id}`)
-    if (!res.ok) return
-
-    const contentType = res.headers.get('content-type') || ''
-
-    if (contentType.includes('application/json')) {
-      const { url } = await res.json()
-      const link = document.createElement('a')
-      link.href = url
-      link.download = file.displayName || file.filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } else {
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = file.displayName || file.filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    }
+  function downloadFile(file: FileData) {
+    const link = document.createElement('a')
+    link.href = `/api/client/download/${file.id}`
+    link.download = file.displayName || file.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   async function handleDownloadAll() {

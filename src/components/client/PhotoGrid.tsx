@@ -129,8 +129,7 @@ function useRowHeight(columns: number) {
 const PAGE_SIZE = 30
 
 export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridProps) {
-  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'generating' | 'downloading' | 'error'>('idle')
-  const [downloadedBytes, setDownloadedBytes] = useState(0)
+  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloading'>('idle')
   const [lightboxIndex, setLightboxIndex] = useState(-1)
   const [firstPageReady, setFirstPageReady] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -221,48 +220,15 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
     [allPhotos.length, hasNextPage, isFetchingNextPage, fetchNextPage],
   )
 
-  async function handleDownloadZip() {
-    setDownloadStatus('generating')
-    setDownloadedBytes(0)
-    try {
-      const res = await fetch('/api/client/download-zip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: 'photo' }),
-      })
-      if (!res.ok || !res.body) {
-        setDownloadStatus('error')
-        return
-      }
-
-      setDownloadStatus('downloading')
-
-      const reader = res.body.getReader()
-      const chunks: Uint8Array[] = []
-      let received = 0
-
-      for (;;) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-        received += value.length
-        setDownloadedBytes(received)
-      }
-
-      const blob = new Blob(chunks as BlobPart[], { type: 'application/zip' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'Zdjecia.zip'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch {
-      setDownloadStatus('error')
-      return
-    }
-    setDownloadStatus('idle')
+  function handleDownloadZip() {
+    setDownloadStatus('downloading')
+    const link = document.createElement('a')
+    link.href = '/api/client/download-zip?category=photo'
+    link.download = 'Zdjecia.zip'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => setDownloadStatus('idle'), 3000)
   }
 
   if (!firstPageReady) {
@@ -288,27 +254,8 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
             {formatTotalSize(totalSize)}
           </p>
         </div>
-        <Button onClick={handleDownloadZip} disabled={downloadStatus !== 'idle' && downloadStatus !== 'error'}>
-          {downloadStatus === 'generating' && (
-            <>
-              <svg className="mr-2 inline h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Generowanie ZIP...
-            </>
-          )}
-          {downloadStatus === 'downloading' && (
-            <>
-              <svg className="mr-2 inline h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Pobieranie... {totalSize > 0 ? `${Math.min(100, Math.round((downloadedBytes / totalSize) * 100))}%` : formatTotalSize(downloadedBytes)}
-            </>
-          )}
-          {downloadStatus === 'error' && 'Blad — sprobuj ponownie'}
-          {downloadStatus === 'idle' && 'Pobierz wszystkie'}
+        <Button onClick={handleDownloadZip} disabled={downloadStatus === 'downloading'}>
+          {downloadStatus === 'downloading' ? 'Rozpoczeto pobieranie...' : 'Pobierz wszystkie'}
         </Button>
       </div>
 

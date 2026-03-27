@@ -26,87 +26,27 @@ function formatSize(bytes: number): string {
 
 export function VideoList({ videos }: VideoListProps) {
   const [downloadingAll, setDownloadingAll] = useState(false)
-  const [downloadedBytes, setDownloadedBytes] = useState(0)
-  const [downloadingId, setDownloadingId] = useState<string | null>(null)
-  const [singleProgress, setSingleProgress] = useState(0)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const totalSize = videos.reduce((s, f) => s + f.filesize, 0)
 
-  async function handleDownloadSingle(file: FileData) {
-    setDownloadingId(file.id)
-    setSingleProgress(0)
-    try {
-      const res = await fetch(`/api/client/download/${file.id}`)
-      if (!res.ok) return
-
-      const contentType = res.headers.get('content-type') || ''
-      if (contentType.includes('application/json')) {
-        const { url } = await res.json()
-        window.location.href = url
-      } else {
-        const total = file.filesize || Number(res.headers.get('content-length')) || 0
-        const reader = res.body!.getReader()
-        const chunks: Uint8Array[] = []
-        let received = 0
-
-        for (;;) {
-          const { done, value } = await reader.read()
-          if (done) break
-          chunks.push(value)
-          received += value.length
-          if (total > 0) setSingleProgress(Math.min(100, Math.round((received / total) * 100)))
-        }
-
-        const blob = new Blob(chunks as BlobPart[], { type: contentType || 'application/octet-stream' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = file.displayName || file.filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }
-    } finally {
-      setDownloadingId(null)
-    }
+  function handleDownloadSingle(file: FileData) {
+    const link = document.createElement('a')
+    link.href = `/api/client/download/${file.id}`
+    link.download = file.displayName || file.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
-  async function handleDownloadZip() {
+  function handleDownloadZip() {
     setDownloadingAll(true)
-    setDownloadedBytes(0)
-    try {
-      const res = await fetch('/api/client/download-zip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: 'video' }),
-      })
-      if (!res.ok || !res.body) return
-
-      const reader = res.body.getReader()
-      const chunks: Uint8Array[] = []
-      let received = 0
-
-      for (;;) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-        received += value.length
-        setDownloadedBytes(received)
-      }
-
-      const blob = new Blob(chunks as BlobPart[], { type: 'application/zip' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'Film.zip'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } finally {
-      setDownloadingAll(false)
-    }
+    const link = document.createElement('a')
+    link.href = '/api/client/download-zip?category=video'
+    link.download = 'Film.zip'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => setDownloadingAll(false), 3000)
   }
 
   return (
@@ -121,11 +61,7 @@ export function VideoList({ videos }: VideoListProps) {
         </div>
         {videos.length > 1 && (
           <Button onClick={handleDownloadZip} disabled={downloadingAll}>
-            {downloadingAll
-              ? totalSize > 0
-                ? `Pobieranie... ${Math.min(100, Math.round((downloadedBytes / totalSize) * 100))}%`
-                : 'Przygotowywanie ZIP...'
-              : 'Pobierz wszystkie'}
+            {downloadingAll ? 'Rozpoczeto pobieranie...' : 'Pobierz wszystkie'}
           </Button>
         )}
       </div>
@@ -192,11 +128,8 @@ export function VideoList({ videos }: VideoListProps) {
                 <Button
                   variant="outline"
                   onClick={() => handleDownloadSingle(video)}
-                  disabled={downloadingId === video.id}
                 >
-                  {downloadingId === video.id
-                    ? `Pobieranie... ${singleProgress}%`
-                    : 'Pobierz'}
+                  Pobierz
                 </Button>
               </div>
             </div>

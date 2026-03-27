@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
@@ -20,37 +19,16 @@ function formatFileSize(bytes: number): string {
 }
 
 export function FileCard({ id, filename, displayName, mimeType, filesize }: FileCardProps) {
-  const [downloading, setDownloading] = useState(false)
   const isImage = mimeType.startsWith('image/')
   const isVideo = mimeType.startsWith('video/')
 
-  async function handleDownload() {
-    setDownloading(true)
-    try {
-      const res = await fetch(`/api/client/download/${id}`)
-      if (!res.ok) return
-
-      const contentType = res.headers.get('content-type') || ''
-
-      if (contentType.includes('application/json')) {
-        // S3 mode - presigned URL
-        const { url } = await res.json()
-        window.location.href = url
-      } else {
-        // Local mode - blob download
-        const blob = await res.blob()
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = displayName || filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }
-    } finally {
-      setDownloading(false)
-    }
+  function handleDownload() {
+    const link = document.createElement('a')
+    link.href = `/api/client/download/${id}`
+    link.download = displayName || filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -99,9 +77,8 @@ export function FileCard({ id, filename, displayName, mimeType, filesize }: File
           variant="outline"
           size="sm"
           onClick={handleDownload}
-          disabled={downloading}
         >
-          {downloading ? '...' : 'Pobierz'}
+          Pobierz
         </Button>
       </div>
     </div>
