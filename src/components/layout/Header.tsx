@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { Menu, X } from 'lucide-react'
 import { useNavigationStore } from '@/stores/navigationStore'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { Navigation } from './Navigation'
@@ -40,7 +41,7 @@ export function Header() {
               width={820}
               height={180}
               className={`h-24 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
-                isScrolled
+                isScrolled || isMenuOpen
                   ? ''
                   : 'brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]'
               }`}
@@ -54,24 +55,19 @@ export function Header() {
           {/* Mobile hamburger */}
           <button
             onClick={toggleMenu}
-            className="relative z-50 flex h-10 w-10 flex-col items-center justify-center gap-1.5 lg:hidden"
+            className="relative z-50 flex h-10 w-10 cursor-pointer items-center justify-center lg:hidden"
             aria-label={isMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
           >
-            <span
-              className={`h-[1.5px] w-6 transition-all duration-300 ${
-                isScrolled ? 'bg-dark' : 'bg-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
-              } ${isMenuOpen ? 'translate-y-[5px] rotate-45 !bg-dark' : ''}`}
-            />
-            <span
-              className={`h-[1.5px] w-6 transition-all duration-300 ${
-                isScrolled ? 'bg-dark' : 'bg-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
-              } ${isMenuOpen ? 'opacity-0' : ''}`}
-            />
-            <span
-              className={`h-[1.5px] w-6 transition-all duration-300 ${
-                isScrolled ? 'bg-dark' : 'bg-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
-              } ${isMenuOpen ? '-translate-y-[5px] -rotate-45 !bg-dark' : ''}`}
-            />
+            {isMenuOpen ? (
+              <X className="h-6 w-6 text-dark transition-colors duration-300" strokeWidth={1.5} />
+            ) : (
+              <Menu
+                className={`h-6 w-6 transition-colors duration-300 ${
+                  isScrolled ? 'text-dark' : 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
+                }`}
+                strokeWidth={1.5}
+              />
+            )}
           </button>
         </div>
       </header>

@@ -25,6 +25,7 @@
     "framer-motion": "^12.12.2",
     "graphql": "^16.10.0",
     "hls.js": "^1.6.15",
+    "lucide-react": "^1.7.0",
     "next": "^15.3.3",
     "nodemailer": "^8.0.3",
     "payload": "^3.33.0",

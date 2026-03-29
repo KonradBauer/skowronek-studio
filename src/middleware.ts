@@ -8,6 +8,15 @@ export function middleware(request: NextRequest) {
     request.nextUrl.protocol === 'https:' ||
     request.headers.get('x-forwarded-proto') === 'https'
 
+  // Already logged in — skip login page, go straight to dashboard
+  if (pathname === '/login') {
+    const token = request.cookies.get('client-token')?.value
+    if (token) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    return NextResponse.next()
+  }
+
   // Client panel pages — redirect to login if no token, refresh cookie if present
   if (pathname.startsWith('/dashboard')) {
     const token = request.cookies.get('client-token')?.value
@@ -48,5 +57,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/client/:path*', '/api/upload/:path*'],
+  matcher: ['/login', '/dashboard/:path*', '/api/client/:path*', '/api/upload/:path*'],
 }
