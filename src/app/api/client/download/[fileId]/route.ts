@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateClient } from '@/lib/auth'
 import path from 'path'
 import { access, stat } from 'fs/promises'
 import { createReadStream } from 'fs'
@@ -11,26 +10,10 @@ export async function GET(
   { params }: { params: Promise<{ fileId: string }> },
 ) {
   const { fileId } = await params
-  const payload = await getPayload({ config })
 
-  // Verify auth
-  const token = req.cookies.get('client-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const clientUser = user as unknown as { id: string; collection?: string; expiresAt?: string }
-  if (clientUser.collection !== 'clients') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const auth = await authenticateClient(req)
+  if (!auth.success) return auth.response
+  const { user, payload } = auth.data
 
   // Fetch file and verify ownership
   const file = await payload.findByID({
@@ -45,13 +28,8 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fileDoc = file as any
   const fileClientId = typeof fileDoc.client === 'object' ? Number(fileDoc.client.id) : Number(fileDoc.client)
-  if (fileClientId !== Number(clientUser.id)) {
+  if (fileClientId !== Number(user.id)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  // Check expiration
-  if (clientUser.expiresAt && new Date(clientUser.expiresAt) < new Date()) {
-    return NextResponse.json({ error: 'Account expired' }, { status: 403 })
   }
 
   const filename = String(fileDoc.filename || '')

@@ -1,31 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateClient } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
-  const payload = await getPayload({ config })
-
-  const token = req.cookies.get('client-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const clientUser = user as unknown as { id: number; collection?: string; expiresAt?: string }
-  if (clientUser.collection !== 'clients') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  if (clientUser.expiresAt && new Date(clientUser.expiresAt) < new Date()) {
-    return NextResponse.json({ error: 'Account expired' }, { status: 403 })
-  }
+  const auth = await authenticateClient(req)
+  if (!auth.success) return auth.response
+  const { user, payload } = auth.data
 
   const { searchParams } = req.nextUrl
   const category = searchParams.get('category') || 'photo'
@@ -35,7 +14,7 @@ export async function GET(req: NextRequest) {
   const result = await payload.find({
     collection: 'client-files',
     where: {
-      client: { equals: Number(clientUser.id) },
+      client: { equals: Number(user.id) },
       category: { equals: category },
     },
     limit,

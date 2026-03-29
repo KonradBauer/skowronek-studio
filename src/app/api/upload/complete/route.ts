@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateAdmin } from '@/lib/auth'
 import { readdir, rm, readFile, mkdir, stat } from 'fs/promises'
 import { createWriteStream, createReadStream } from 'fs'
 import path from 'path'
@@ -19,21 +18,9 @@ const BUFFER_THRESHOLD = 1.5 * 1024 * 1024 * 1024
 export const maxDuration = 600
 
 export async function POST(req: NextRequest) {
-  const payload = await getPayload({ config })
-
-  // Verify admin auth
-  const token = req.cookies.get('payload-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user || user.collection !== 'users') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const auth = await authenticateAdmin(req)
+  if (!auth.success) return auth.response
+  const { payload } = auth.data
 
   const { uploadId, clientId, filename, mimeType, category } = await req.json()
 

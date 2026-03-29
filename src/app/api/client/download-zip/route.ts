@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateClient } from '@/lib/auth'
 import archiver from 'archiver'
 import path from 'path'
 import { createReadStream } from 'fs'
@@ -10,29 +9,9 @@ import { PassThrough, Readable } from 'stream'
 export const maxDuration = 600
 
 export async function GET(req: NextRequest) {
-  const payload = await getPayload({ config })
-
-  const token = req.cookies.get('client-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const clientUser = user as unknown as { id: number; collection?: string; expiresAt?: string }
-  if (clientUser.collection !== 'clients') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  if (clientUser.expiresAt && new Date(clientUser.expiresAt) < new Date()) {
-    return NextResponse.json({ error: 'Account expired' }, { status: 403 })
-  }
+  const auth = await authenticateClient(req)
+  if (!auth.success) return auth.response
+  const { user, payload } = auth.data
 
   const category = req.nextUrl.searchParams.get('category') as 'photo' | 'video' | 'all'
   if (!category || !['photo', 'video', 'all'].includes(category)) {
@@ -40,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { client: { equals: Number(clientUser.id) } }
+  const where: any = { client: { equals: Number(user.id) } }
   if (category !== 'all') {
     where.category = { equals: category }
   }

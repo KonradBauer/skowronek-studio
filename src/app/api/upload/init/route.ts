@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateAdmin } from '@/lib/auth'
 import { mkdir, readdir, stat, rm } from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
-  const payload = await getPayload({ config })
-
-  // Verify admin auth
-  const token = req.cookies.get('payload-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user || user.collection !== 'users') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const auth = await authenticateAdmin(req)
+  if (!auth.success) return auth.response
+  const { payload } = auth.data
 
   const { clientId, filename, mimeType, totalSize, totalChunks } = await req.json()
 

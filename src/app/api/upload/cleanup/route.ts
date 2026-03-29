@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { authenticateAdmin } from '@/lib/auth'
 import { rm, access } from 'fs/promises'
 import path from 'path'
 
 export async function POST(req: NextRequest) {
-  const payload = await getPayload({ config })
-
-  const token = req.cookies.get('payload-token')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { user } = await payload.auth({
-    headers: new Headers({ Authorization: `JWT ${token}` }),
-  })
-
-  if (!user || user.collection !== 'users') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const auth = await authenticateAdmin(req)
+  if (!auth.success) return auth.response
 
   const { uploadId } = await req.json()
 

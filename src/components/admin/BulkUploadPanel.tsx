@@ -88,14 +88,9 @@ async function uploadChunked(
       const end = Math.min(start + chunkSize, file.size)
       const chunk = file.slice(start, end)
 
-      const formData = new FormData()
-      formData.append('uploadId', uploadId)
-      formData.append('chunkIndex', String(i))
-      formData.append('chunk', chunk)
-
-      const chunkRes = await fetch('/api/upload/chunk', {
+      const chunkRes = await fetch(`/api/upload/chunk?uploadId=${uploadId}&chunkIndex=${i}`, {
         method: 'POST',
-        body: formData,
+        body: chunk,
       })
 
       if (!chunkRes.ok) {
