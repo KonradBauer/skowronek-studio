@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ExpirationBanner } from '@/components/client/ExpirationBanner'
 import { ClientDashboard } from '@/components/client/ClientDashboard'
+import { LogoutButton } from '@/components/client/LogoutButton'
 
 const PHOTO_PAGE_SIZE = 30
 
@@ -104,14 +105,7 @@ export default async function DashboardPage() {
         <Link href="/">
           <Image src="/logo.png" alt="Skowronek Studio" width={180} height={66} className="h-12 w-auto object-contain" />
         </Link>
-        <form action="/api/clients/logout" method="POST">
-          <button
-            type="submit"
-            className="cursor-pointer text-sm text-body transition-colors hover:text-primary"
-          >
-            Wyloguj
-          </button>
-        </form>
+        <LogoutButton />
       </div>
 
       {/* Welcome */}
