@@ -11,7 +11,9 @@ function getDefaultExpiryDate(): string {
 export const Clients: CollectionConfig = {
   slug: 'clients',
   labels: { singular: 'Klient', plural: 'Klienci' },
-  auth: true,
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 7, // 7 days — matches cookie maxAge for sliding session
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'email', 'expiresAt', 'isActive'],

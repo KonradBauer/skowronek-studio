@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { StripeTransition } from '@/components/animations/StripeTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
+import { CookieConsent } from '@/components/ui/CookieConsent'
 import { JsonLd } from '@/components/seo/JsonLd'
 import '@/styles/globals.css'
 
@@ -80,6 +81,7 @@ export default function FrontendLayout({ children }: { children: React.ReactNode
         <main>{children}</main>
         <Footer />
         <ScrollToTop />
+        <CookieConsent />
       </body>
     </html>
   )

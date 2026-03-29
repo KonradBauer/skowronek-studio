@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { CookieConsent } from '@/components/ui/CookieConsent'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
@@ -11,6 +12,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <html lang="pl">
       <body className="frontend min-h-screen bg-cream antialiased">
         {children}
+        <CookieConsent />
       </body>
     </html>
   )
