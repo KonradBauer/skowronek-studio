@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const SEVEN_DAYS = 60 * 60 * 24 * 7
 
+/** Decode JWT payload without verification (signature is checked later by payload.auth) */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const json = atob(payload)
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isSecure =
@@ -12,6 +25,15 @@ export function middleware(request: NextRequest) {
   if (pathname === '/login') {
     const token = request.cookies.get('client-token')?.value
     if (token) {
+      // Check if account expired before redirecting to dashboard
+      const payload = decodeJwtPayload(token)
+      const expiresAt = payload?.expiresAt as string | undefined
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        // Expired — clear cookie and show login page
+        const response = NextResponse.next()
+        response.cookies.delete('client-token')
+        return response
+      }
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
     return NextResponse.next()
@@ -22,6 +44,16 @@ export function middleware(request: NextRequest) {
     const token = request.cookies.get('client-token')?.value
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Check if account expired
+    const payload = decodeJwtPayload(token)
+    const expiresAt = payload?.expiresAt as string | undefined
+    if (expiresAt && new Date(expiresAt) < new Date()) {
+      // Expired — clear cookie and redirect to login
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('client-token')
+      return response
     }
 
     const response = NextResponse.next()

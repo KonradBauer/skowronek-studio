@@ -78,6 +78,7 @@ export const Clients: CollectionConfig = {
       required: true,
       label: 'Data wygaśnięcia',
       defaultValue: getDefaultExpiryDate,
+      saveToJWT: true,
       admin: {
         date: {
           pickerAppearance: 'dayOnly',

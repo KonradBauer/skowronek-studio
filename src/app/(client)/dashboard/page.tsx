@@ -45,12 +45,6 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Expired account — clear cookie and redirect to login
-  if (clientData.expiresAt && new Date(clientData.expiresAt) < new Date()) {
-    cookieStore.delete('client-token')
-    redirect('/login')
-  }
-
   // Fetch first page of photos + total stats
   const photosResult = await payload.find({
     collection: 'client-files',
