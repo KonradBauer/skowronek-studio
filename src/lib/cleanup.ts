@@ -32,6 +32,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
       ],
     },
     limit: 100,
+    overrideAccess: true,
   })
 
   result.processed = expiredClients.docs.length
@@ -47,6 +48,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
           where: { client: { equals: client.id } },
           limit: 100,
           page,
+          overrideAccess: true,
         })
         result.filesRemoved += files.docs.length
         hasMore = files.hasNextPage
@@ -57,6 +59,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
       await payload.delete({
         collection: 'clients',
         id: client.id,
+        overrideAccess: true,
       })
 
       result.deleted++

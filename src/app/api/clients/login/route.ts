@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+/** Days after expiration during which we show "account expired" instead of generic error */
+const EXPIRED_GRACE_DAYS = 3
+
 function isSecureRequest(req: NextRequest): boolean {
   if (req.nextUrl.protocol === 'https:') return true
   if (req.headers.get('x-forwarded-proto') === 'https') return true
@@ -24,8 +27,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email i haslo sa wymagane' }, { status: 400 })
   }
 
+  // Check if account exists and whether it's expired BEFORE attempting login
+  const existing = await payload.find({
+    collection: 'clients',
+    where: { email: { equals: email } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (existing.docs.length > 0) {
+    const client = existing.docs[0] as unknown as { expiresAt?: string }
+    if (client.expiresAt) {
+      const expiresAt = new Date(client.expiresAt)
+      const now = new Date()
+
+      if (expiresAt < now) {
+        const daysSinceExpiry = (now.getTime() - expiresAt.getTime()) / (1000 * 60 * 60 * 24)
+
+        if (daysSinceExpiry <= EXPIRED_GRACE_DAYS) {
+          return NextResponse.json(
+            {
+              error: 'Twoje konto wygasło. Skontaktuj się ze studiem, jeśli potrzebujesz przedłużenia.',
+              code: 'ACCOUNT_EXPIRED',
+            },
+            { status: 403 },
+          )
+        }
+
+        // Past grace period — generic error as if account doesn't exist
+        return NextResponse.json(
+          { error: 'Nieprawidlowy email lub haslo' },
+          { status: 401 },
+        )
+      }
+    }
+  }
+
+  // Account is active — proceed with login
   try {
-    // beforeLogin hook in Clients collection throws if account expired
     const result = await payload.login({
       collection: 'clients',
       data: { email, password },
@@ -52,19 +91,7 @@ export async function POST(req: NextRequest) {
     })
 
     return response
-  } catch (err) {
-    const message = err instanceof Error ? err.message : ''
-
-    if (message === 'ACCOUNT_EXPIRED') {
-      return NextResponse.json(
-        {
-          error: 'Twoje konto wygasło. Skontaktuj się ze studiem, jeśli potrzebujesz przedłużenia.',
-          code: 'ACCOUNT_EXPIRED',
-        },
-        { status: 403 },
-      )
-    }
-
+  } catch {
     return NextResponse.json(
       { error: 'Nieprawidlowy email lub haslo' },
       { status: 401 },
