@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateClient } from '@/lib/auth'
+import { getS3Client } from '@/lib/s3'
 import archiver from 'archiver'
 import path from 'path'
 import { createReadStream } from 'fs'
@@ -37,8 +38,7 @@ export async function GET(req: NextRequest) {
 
   const zipName = category === 'video' ? 'Film.zip' : category === 'photo' ? 'Zdjecia.zip' : 'Pliki.zip'
 
-  // Generate ZIP on-the-fly and stream to client
-  const archive = archiver('zip', { zlib: { level: 0 } }) // level 0 = store only (photos/videos already compressed)
+  const archive = archiver('zip', { zlib: { level: 0 } })
   const passThrough = new PassThrough()
   archive.pipe(passThrough)
 
@@ -51,17 +51,8 @@ export async function GET(req: NextRequest) {
     const entryName = String(fileDoc.displayName || fileDoc.filename || 'plik')
 
     if (process.env.S3_BUCKET) {
-      const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
-      const s3 = new S3Client({
-        endpoint: process.env.S3_ENDPOINT,
-        region: process.env.S3_REGION || 'auto',
-        credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
-        },
-        forcePathStyle: true,
-      })
-      const response = await s3.send(new GetObjectCommand({
+      const { GetObjectCommand } = await import('@aws-sdk/client-s3')
+      const response = await getS3Client().send(new GetObjectCommand({
         Bucket: process.env.S3_BUCKET,
         Key: `client-files/${filename}`,
       }))

@@ -10,8 +10,12 @@ export async function POST(req: NextRequest) {
   const uploadId = req.nextUrl.searchParams.get('uploadId')
   const chunkIndex = Number(req.nextUrl.searchParams.get('chunkIndex'))
 
-  if (!uploadId || isNaN(chunkIndex)) {
+  if (!uploadId || isNaN(chunkIndex) || chunkIndex < 0) {
     return NextResponse.json({ error: 'Brak wymaganych pol' }, { status: 400 })
+  }
+
+  if (!/^[0-9a-f-]{36}$/i.test(uploadId)) {
+    return NextResponse.json({ error: 'Nieprawidlowy uploadId' }, { status: 400 })
   }
 
   // Verify tmp directory exists (validates uploadId)

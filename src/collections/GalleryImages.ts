@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { IMAGE_SIZES } from '@/lib/constants'
 
 export const GalleryImages: CollectionConfig = {
   slug: 'gallery-images',
@@ -6,11 +7,7 @@ export const GalleryImages: CollectionConfig = {
   upload: {
     staticDir: 'uploads/gallery',
     mimeTypes: ['image/*'],
-    imageSizes: [
-      { name: 'thumbnail', width: 400, height: 300, position: 'centre' },
-      { name: 'card', width: 768, height: 512, position: 'centre' },
-      { name: 'full', width: 1920, height: undefined, position: 'centre' },
-    ],
+    imageSizes: IMAGE_SIZES,
   },
   admin: {
     useAsTitle: 'title',

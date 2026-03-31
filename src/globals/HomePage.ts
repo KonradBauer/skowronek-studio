@@ -24,7 +24,7 @@ function mediaFieldMany(label: string, maxRows: number): Field {
 
 export const HomePage: GlobalConfig = {
   slug: 'home-page',
-  label: 'Strona glowna',
+  label: 'Strona główna',
   access: {
     read: () => true,
     update: ({ req: { user } }) => user?.collection === 'users',
@@ -36,9 +36,9 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Hero',
       fields: [
-        mediaFieldMany('Zdjecia hero (max 6)', 6),
-        { name: 'title', type: 'text', defaultValue: 'Skowronek Studio', label: 'Tytul' },
-        { name: 'subtitle', type: 'text', defaultValue: 'Fotografia z pasja', label: 'Podtytul' },
+        mediaFieldMany('Zdjęcia hero (max 6)', 6),
+        { name: 'title', type: 'text', defaultValue: 'Skowronek Studio', label: 'Tytuł' },
+        { name: 'subtitle', type: 'text', defaultValue: 'Fotografia z pasją', label: 'Podtytuł' },
         { name: 'ctaText', type: 'text', defaultValue: 'Zobacz portfolio', label: 'Tekst CTA' },
         { name: 'ctaLink', type: 'text', defaultValue: '#portfolio', label: 'Link CTA' },
       ],
@@ -49,8 +49,8 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'O nas',
       fields: [
-        { name: 'title', type: 'text', defaultValue: 'O nas', label: 'Tytul' },
-        { name: 'heading', type: 'text', defaultValue: 'Chwile, ktore zostaja na zawsze', label: 'Naglowek' },
+        { name: 'title', type: 'text', defaultValue: 'O nas', label: 'Tytuł' },
+        { name: 'heading', type: 'text', defaultValue: 'Chwile, które zostają na zawsze', label: 'Nagłówek' },
         {
           name: 'paragraphs',
           type: 'array',
@@ -60,7 +60,7 @@ export const HomePage: GlobalConfig = {
             { name: 'text', type: 'textarea', required: true, label: 'Tekst akapitu' },
           ],
         },
-        mediaField('Zdjecie'),
+        mediaField('Zdjęcie'),
       ],
     },
     // ── Portfolio / Realizacje ────────────────────
@@ -69,9 +69,9 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Portfolio',
       fields: [
-        { name: 'title', type: 'text', defaultValue: 'Portfolio', label: 'Tytul' },
-        { name: 'subtitle', type: 'text', defaultValue: 'Nasze realizacje', label: 'Podtytul' },
-        mediaFieldMany('Zdjecia realizacji', 12),
+        { name: 'title', type: 'text', defaultValue: 'Portfolio', label: 'Tytuł' },
+        { name: 'subtitle', type: 'text', defaultValue: 'Nasze realizacje', label: 'Podtytuł' },
+        mediaFieldMany('Zdjęcia realizacji', 12),
       ],
     },
     // ── Oferta ────────────────────────────────────
@@ -80,8 +80,8 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Oferta',
       fields: [
-        { name: 'title', type: 'text', defaultValue: 'Oferta', label: 'Tytul' },
-        { name: 'subtitle', type: 'text', defaultValue: 'Co oferujemy', label: 'Podtytul' },
+        { name: 'title', type: 'text', defaultValue: 'Oferta', label: 'Tytuł' },
+        { name: 'subtitle', type: 'text', defaultValue: 'Co oferujemy', label: 'Podtytuł' },
       ],
     },
     // ── Voucher ───────────────────────────────────
@@ -90,12 +90,12 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Voucher',
       fields: [
-        { name: 'label', type: 'text', defaultValue: 'Bon podarunkowy', label: 'Label nad tytulem' },
-        { name: 'title', type: 'text', defaultValue: 'Podaruj wyjatkowe chwile', label: 'Tytul' },
-        { name: 'description', type: 'textarea', defaultValue: 'Szukasz idealnego prezentu? Voucher na sesje fotograficzna to piekny i osobisty upominek na kazda okazje - urodziny, rocznice, Dzien Matki czy swieta.', label: 'Opis' },
-        { name: 'ctaText', type: 'text', defaultValue: 'Zamow voucher', label: 'Tekst CTA' },
+        { name: 'label', type: 'text', defaultValue: 'Bon podarunkowy', label: 'Label nad tytułem' },
+        { name: 'title', type: 'text', defaultValue: 'Podaruj wyjątkowe chwile', label: 'Tytuł' },
+        { name: 'description', type: 'textarea', defaultValue: 'Szukasz idealnego prezentu? Voucher na sesję fotograficzną to piękny i osobisty upominek na każdą okazję - urodziny, rocznice, Dzień Matki czy święta.', label: 'Opis' },
+        { name: 'ctaText', type: 'text', defaultValue: 'Zamów voucher', label: 'Tekst CTA' },
         { name: 'ctaLink', type: 'text', defaultValue: '#contact', label: 'Link CTA' },
-        mediaField('Zdjecie tla'),
+        mediaField('Zdjęcie tła'),
       ],
     },
     // ── Kontakt ───────────────────────────────────
@@ -104,9 +104,9 @@ export const HomePage: GlobalConfig = {
       type: 'group',
       label: 'Kontakt',
       fields: [
-        { name: 'title', type: 'text', defaultValue: 'Kontakt', label: 'Tytul' },
-        { name: 'heading', type: 'text', defaultValue: 'Porozmawiajmy', label: 'Naglowek' },
-        { name: 'subtitle', type: 'text', defaultValue: 'Chetnie porozmawiamy o Twoich planach. Napisz do nas lub zadzwon - razem stworzymy cos wyjatkowego.', label: 'Podtytul' },
+        { name: 'title', type: 'text', defaultValue: 'Kontakt', label: 'Tytuł' },
+        { name: 'heading', type: 'text', defaultValue: 'Porozmawiajmy', label: 'Nagłówek' },
+        { name: 'subtitle', type: 'text', defaultValue: 'Chętnie porozmawiamy o Twoich planach. Napisz do nas lub zadzwoń - razem stworzymy coś wyjątkowego.', label: 'Podtytuł' },
       ],
     },
   ],

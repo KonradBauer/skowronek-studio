@@ -12,7 +12,7 @@ import { transcodeToHLS } from '@/lib/hls-transcoder'
 // Above this threshold we stream chunks straight to the staticDir and create
 // the Payload document with metadata only (no file object), avoiding the ~2 GiB
 // Node.js Buffer limit entirely. This supports files of any size (30 GB+).
-const BUFFER_THRESHOLD = 1.5 * 1024 * 1024 * 1024
+import { UPLOAD_BUFFER_THRESHOLD } from '@/lib/constants'
 
 // Allow up to 10 minutes for assembling very large files
 export const maxDuration = 600
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     const fileCategory = category || (mimeType.startsWith('video/') ? 'video' : 'photo')
 
-    if (totalSize <= BUFFER_THRESHOLD) {
+    if (totalSize <= UPLOAD_BUFFER_THRESHOLD) {
       // ── Small/medium files: read into buffer, let Payload handle everything ──
       const chunkBuffers: Buffer[] = []
       for (const chunkFile of chunkFiles) {

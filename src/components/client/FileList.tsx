@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { FileCard } from './FileCard'
 import { Button } from '@/components/ui/Button'
+import { formatFileSize } from '@/lib/format'
 
 interface FileData {
   id: string
@@ -14,12 +15,6 @@ interface FileData {
 
 interface FileListProps {
   files: FileData[]
-}
-
-function formatTotalSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 export function FileList({ files }: FileListProps) {
@@ -74,7 +69,7 @@ export function FileList({ files }: FileListProps) {
       {/* Download all button */}
       <div className="flex items-center justify-between border-b border-input-border pb-4">
         <p className="text-sm text-body-muted">
-          {files.length} {files.length === 1 ? 'plik' : files.length < 5 ? 'pliki' : 'plików'} - {formatTotalSize(totalSize)}
+          {files.length} {files.length === 1 ? 'plik' : files.length < 5 ? 'pliki' : 'plików'} - {formatFileSize(totalSize)}
         </p>
         <Button
           onClick={handleDownloadAll}

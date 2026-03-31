@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { FILE_CATEGORIES } from '@/lib/constants'
 import { invalidateZipCache } from '@/lib/zip-generator'
 import { rm } from 'fs/promises'
 import path from 'path'
@@ -45,10 +46,7 @@ export const ClientFiles: CollectionConfig = {
       defaultValue: 'photo',
       label: 'Kategoria',
       index: true,
-      options: [
-        { label: 'Zdjecie', value: 'photo' },
-        { label: 'Film', value: 'video' },
-      ],
+      options: [...FILE_CATEGORIES],
     },
     {
       name: 'displayName',
@@ -111,13 +109,13 @@ export const ClientFiles: CollectionConfig = {
         // Cleanup video thumbnail
         if (doc.videoThumbnail) {
           const thumbPath = path.resolve('uploads', 'client-files', doc.videoThumbnail)
-          rm(thumbPath, { force: true }).catch(() => {})
+          rm(thumbPath, { force: true }).catch(console.error)
         }
 
         // Cleanup HLS transcoded files
         if (doc.hlsPath || doc.hlsStatus === 'ready') {
           const hlsDir = path.resolve('uploads', 'hls', String(doc.id))
-          rm(hlsDir, { recursive: true, force: true }).catch(() => {})
+          rm(hlsDir, { recursive: true, force: true }).catch(console.error)
         }
 
       },

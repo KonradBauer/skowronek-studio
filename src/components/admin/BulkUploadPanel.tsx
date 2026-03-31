@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
+import { formatFileSize } from '@/lib/format'
 
 const MAX_CONCURRENT_PHOTOS = 2
 const MAX_RETRIES = 2
@@ -24,13 +25,6 @@ interface ExistingFile {
   mimeType: string
   filesize: number
   category: string
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 function formatEta(seconds: number): string {
@@ -467,7 +461,7 @@ export const BulkUploadPanel = () => {
             <div style={styles.section}>
               <div style={styles.sectionHeader}>
                 <span style={styles.sectionTitle}>
-                  Zdjecia ({existingPhotos.length}) - {formatSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
+                  Zdjecia ({existingPhotos.length}) - {formatFileSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
               </div>
             </div>
@@ -477,7 +471,7 @@ export const BulkUploadPanel = () => {
             <div style={styles.section}>
               <div style={styles.sectionHeader}>
                 <span style={styles.sectionTitle}>
-                  Filmy ({existingVideos.length}) - {formatSize(existingVideos.reduce((s, f) => s + f.filesize, 0))}
+                  Filmy ({existingVideos.length}) - {formatFileSize(existingVideos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -511,7 +505,7 @@ export const BulkUploadPanel = () => {
                           {isPlaying ? '\u23F8' : '\u25B6'}
                         </button>
                         <span style={styles.fileName}>{file.filename}</span>
-                        <span style={styles.fileSize}>{formatSize(file.filesize)}</span>
+                        <span style={styles.fileSize}>{formatFileSize(file.filesize)}</span>
                         <button
                           type="button"
                           onClick={() => handleDeleteFile(file.id)}
@@ -547,7 +541,7 @@ export const BulkUploadPanel = () => {
               Wgrywanie: {uploadStats.filesDone}/{uploadStats.filesTotal} plikow
             </span>
             <span style={{ fontSize: '12px', color: '#666' }}>
-              {uploadStats.speed > 0 ? `${formatSize(uploadStats.speed)}/s` : '...'} | ~{formatEta(uploadStats.eta)}
+              {uploadStats.speed > 0 ? `${formatFileSize(uploadStats.speed)}/s` : '...'} | ~{formatEta(uploadStats.eta)}
             </span>
           </div>
           <div style={styles.progressBar}>
@@ -560,7 +554,7 @@ export const BulkUploadPanel = () => {
             />
           </div>
           <div style={{ fontSize: '11px', color: '#999', marginTop: '4px', textAlign: 'right' as const }}>
-            {formatSize(uploadStats.totalBytesUploaded)} / {formatSize(uploadStats.totalBytes)}
+            {formatFileSize(uploadStats.totalBytesUploaded)} / {formatFileSize(uploadStats.totalBytes)}
           </div>
         </div>
       )}
@@ -627,7 +621,7 @@ export const BulkUploadPanel = () => {
           {photos.length > 0 && (
             <div style={{ ...styles.sectionHeader, marginBottom: photos.some((p) => p.status === 'error') ? '4px' : '0' }}>
               <span style={styles.sectionTitle}>
-                Zdjecia ({photos.length}) - {formatSize(totalPhotoSize)}
+                Zdjecia ({photos.length}) - {formatFileSize(totalPhotoSize)}
               </span>
               {!isUploading && (
                 <button type="button" onClick={() => setPhotos([])} style={styles.clearBtn}>Wyczysc</button>
@@ -644,7 +638,7 @@ export const BulkUploadPanel = () => {
             <>
               <div style={{ ...styles.sectionHeader, marginTop: photos.length > 0 ? '8px' : '0' }}>
                 <span style={styles.sectionTitle}>
-                  Filmy ({videos.length}) - {formatSize(totalVideoSize)}
+                  Filmy ({videos.length}) - {formatFileSize(totalVideoSize)}
                 </span>
                 {!isUploading && (
                   <button type="button" onClick={() => setVideos([])} style={styles.clearBtn}>Wyczysc</button>
@@ -653,7 +647,7 @@ export const BulkUploadPanel = () => {
               {videos.map((video, i) => (
                 <div key={`video-status-${i}`} style={styles.videoStatusRow}>
                   <span style={styles.videoStatusName}>{video.file.name}</span>
-                  <span style={{ fontSize: '12px', color: '#999', flexShrink: 0 }}>{formatSize(video.file.size)}</span>
+                  <span style={{ fontSize: '12px', color: '#999', flexShrink: 0 }}>{formatFileSize(video.file.size)}</span>
                   {video.status === 'processing' && (
                     <span style={styles.videoStatusProcessing}>
                       <span style={styles.spinner} /> {'\u0141\u0105czenie pliku...'}
@@ -687,7 +681,7 @@ export const BulkUploadPanel = () => {
                   cursor: isUploading ? 'not-allowed' : 'pointer',
                 }}
               >
-                {isUploading ? 'Wgrywanie...' : `Wgraj ${pendingCount} plikow (${formatSize(totalPhotoSize + totalVideoSize)})`}
+                {isUploading ? 'Wgrywanie...' : `Wgraj ${pendingCount} plikow (${formatFileSize(totalPhotoSize + totalVideoSize)})`}
               </button>
             </div>
           )}

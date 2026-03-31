@@ -114,7 +114,7 @@ export function ReviewsSection() {
       <AnimatedSection>
         <div className="mb-12 text-center">
           <p className="mb-4 text-sm uppercase tracking-[0.2em] text-primary">Opinie</p>
-          <Heading as="h2">Co mowia nasi klienci</Heading>
+          <Heading as="h2">Co mówią nasi klienci</Heading>
           <div className="mt-4 flex items-center justify-center gap-2">
             <Stars count={Math.round(rating)} />
             <span className="text-sm text-body">
@@ -131,7 +131,7 @@ export function ReviewsSection() {
           <AnimatePresence mode="popLayout">
             {visibleIndices.map((idx) => (
               <motion.div
-                key={`${idx}-${current}`}
+                key={idx}
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}

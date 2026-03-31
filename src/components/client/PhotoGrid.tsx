@@ -11,6 +11,7 @@ import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/counter.css'
 import { Button } from '@/components/ui/Button'
+import { formatFileSize } from '@/lib/format'
 
 function Spinner() {
   return (
@@ -83,12 +84,6 @@ interface PhotoGridProps {
   totalSize: number
 }
 
-function formatTotalSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
-
 function useColumns() {
   const [columns, setColumns] = useState(6)
 
@@ -139,7 +134,12 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
 
   // Preload first page — show grid only when fully loaded
   useEffect(() => {
-    preloadThumbnails(initialPhotos).then(() => setFirstPageReady(true))
+    const timeout = setTimeout(() => setFirstPageReady(true), 10000)
+    preloadThumbnails(initialPhotos).then(() => {
+      clearTimeout(timeout)
+      setFirstPageReady(true)
+    })
+    return () => clearTimeout(timeout)
   }, [initialPhotos])
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -251,7 +251,7 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
           <h2 className="text-lg font-light tracking-wide text-dark">Zdjecia</h2>
           <p className="text-sm text-body-muted">
             {totalCount} {totalCount === 1 ? 'zdjecie' : totalCount < 5 ? 'zdjecia' : 'zdjec'} -{' '}
-            {formatTotalSize(totalSize)}
+            {formatFileSize(totalSize)}
           </p>
         </div>
         <Button onClick={handleDownloadZip} disabled={downloadStatus === 'downloading'}>

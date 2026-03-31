@@ -1,8 +1,5 @@
 import type { CollectionConfig } from 'payload'
-
-const DEFAULT_EXPIRY_DAYS = 10
-/** Days after expiration during which we show "account expired" instead of generic error */
-const EXPIRED_GRACE_DAYS = 3
+import { DEFAULT_EXPIRY_DAYS, EXPIRED_GRACE_DAYS, TOKEN_MAX_AGE } from '@/lib/constants'
 
 function getDefaultExpiryDate(): string {
   const date = new Date()
@@ -14,7 +11,7 @@ export const Clients: CollectionConfig = {
   slug: 'clients',
   labels: { singular: 'Klient', plural: 'Klienci' },
   auth: {
-    tokenExpiration: 60 * 60 * 24 * 7, // 7 days — matches cookie maxAge for sliding session
+    tokenExpiration: TOKEN_MAX_AGE,
   },
   admin: {
     useAsTitle: 'name',

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { IMAGE_SIZES } from '@/lib/constants'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -8,11 +9,7 @@ export const Media: CollectionConfig = {
     mimeTypes: ['image/*'],
     adminThumbnail: 'thumbnail',
     displayPreview: true,
-    imageSizes: [
-      { name: 'thumbnail', width: 400, height: 300, position: 'centre' },
-      { name: 'card', width: 768, height: 512, position: 'centre' },
-      { name: 'full', width: 1920, height: undefined, position: 'centre' },
-    ],
+    imageSizes: IMAGE_SIZES,
   },
   admin: {
     useAsTitle: 'filename',
