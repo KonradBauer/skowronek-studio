@@ -73,22 +73,28 @@ export function ContactSection({ data }: { data: ContactData }) {
             )}
 
             <div className="space-y-4 text-body">
-              <div>
-                <p className="text-sm uppercase tracking-[0.1em] text-primary">Email</p>
-                <a href={`mailto:${email}`} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
-                  {email}
-                </a>
-              </div>
-              <div>
-                <p className="text-sm uppercase tracking-[0.1em] text-primary">Telefon</p>
-                <a href={`tel:${phone.replace(/\s/g, '')}`} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
-                  {phone}
-                </a>
-              </div>
-              <div>
-                <p className="text-sm uppercase tracking-[0.1em] text-primary">Adres</p>
-                <p>{address}</p>
-              </div>
+              {email && (
+                <div>
+                  <p className="text-sm uppercase tracking-[0.1em] text-primary">Email</p>
+                  <a href={`mailto:${email}`} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
+                    {email}
+                  </a>
+                </div>
+              )}
+              {phone && (
+                <div>
+                  <p className="text-sm uppercase tracking-[0.1em] text-primary">Telefon</p>
+                  <a href={`tel:${phone.replace(/\s/g, '')}`} className="inline-flex min-h-11 items-center transition-colors hover:text-primary">
+                    {phone}
+                  </a>
+                </div>
+              )}
+              {address && (
+                <div>
+                  <p className="text-sm uppercase tracking-[0.1em] text-primary">Adres</p>
+                  <p>{address}</p>
+                </div>
+              )}
             </div>
 
             {/* Social */}
