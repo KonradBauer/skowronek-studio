@@ -13,7 +13,6 @@ interface FileData {
   mimeType: string
   filesize: number
   category: 'photo' | 'video'
-  hlsStatus?: string
 }
 
 interface ClientDashboardProps {

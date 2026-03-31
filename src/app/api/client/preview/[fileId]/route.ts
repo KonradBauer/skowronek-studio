@@ -3,7 +3,7 @@ import { authenticateClient } from '@/lib/auth'
 import { verifyFileOwnership, parseRangeHeader } from '@/lib/file-utils'
 import { getS3Client, PRESIGNED_URL_EXPIRY } from '@/lib/s3'
 import path from 'path'
-import { access, stat, readFile, writeFile, mkdir, readdir, unlink } from 'fs/promises'
+import { stat, readFile, writeFile, mkdir, readdir, unlink } from 'fs/promises'
 import { createReadStream } from 'fs'
 import { Readable } from 'stream'
 import sharp from 'sharp'
@@ -54,7 +54,7 @@ async function getOrCreateOptimized(
 
   mkdir(path.dirname(cachePath), { recursive: true })
     .then(() => writeFile(cachePath, optimized))
-    .catch(() => {})
+    .catch(console.error)
 
   cleanupCache()
 
@@ -74,6 +74,7 @@ export async function GET(
   const file = await payload.findByID({
     collection: 'client-files',
     id: fileId,
+    select: { client: true, filename: true, mimeType: true },
   })
 
   if (!file) {
@@ -93,35 +94,6 @@ export async function GET(
 
   if (!isImage && !isVideo) {
     return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 })
-  }
-
-  // Video thumbnail request
-  if (isVideo && req.nextUrl.searchParams.get('size') === 'thumbnail') {
-    const thumbFilename = String(fileDoc.videoThumbnail || '')
-    if (thumbFilename) {
-      if (process.env.S3_BUCKET) {
-        const { GetObjectCommand } = await import('@aws-sdk/client-s3')
-        const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
-        const url = await getSignedUrl(getS3Client(), new GetObjectCommand({
-          Bucket: process.env.S3_BUCKET,
-          Key: `client-files/${thumbFilename}`,
-        }), { expiresIn: PRESIGNED_URL_EXPIRY })
-        return NextResponse.redirect(url)
-      }
-
-      const thumbPath = path.resolve('uploads', 'client-files', thumbFilename)
-      try {
-        await access(thumbPath)
-        const buffer = await readFile(thumbPath)
-        return new NextResponse(buffer, {
-          headers: {
-            'Content-Type': 'image/jpeg',
-            'Cache-Control': 'private, max-age=86400, immutable',
-          },
-        })
-      } catch {}
-    }
-    return new NextResponse(null, { status: 404 })
   }
 
   // S3 mode - redirect to presigned URL
@@ -149,7 +121,7 @@ export async function GET(
     if (size === 'thumbnail') {
       try {
         const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-thumb.jpg`), 400, 50)
-        return new NextResponse(new Uint8Array(buffer), {
+        return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'image/jpeg',
             'Content-Length': String(buffer.length),
@@ -164,7 +136,7 @@ export async function GET(
     if (size === 'medium') {
       try {
         const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-medium.jpg`), 1920, 70)
-        return new NextResponse(new Uint8Array(buffer), {
+        return new NextResponse(buffer, {
           headers: {
             'Content-Type': 'image/jpeg',
             'Content-Length': String(buffer.length),
@@ -228,9 +200,11 @@ export async function GET(
     })
   }
 
-  const buffer = await readFile(fullPath)
+  // Stream video instead of buffering entire file into memory
+  const nodeStream = createReadStream(fullPath)
+  const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
-  return new NextResponse(buffer, {
+  return new NextResponse(webStream, {
     headers: {
       'Content-Type': mimeType,
       'Content-Length': String(fileSize),

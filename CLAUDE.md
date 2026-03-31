@@ -21,7 +21,7 @@ pnpm generate:types  # typy Payload (powinno być w pipeline build)
 - `overrideAccess: true` — wymagane w hookach i operacjach bez kontekstu usera (cron, beforeDelete)
 - `saveToJWT: true` — pola potrzebne w middleware (np. `expiresAt`)
 - Pliki klientów: chunked upload, 2 ścieżki assembly (<=1.5GB buffer, >1.5GB stream)
-- Video: natywny `<video>`, HLS streaming, ffmpeg thumbnails
+- Video: natywny `<video>`, range requests streaming
 - Obrazy: `next/image` w froncie, natywny `<img>` w admin
 
 ---
@@ -128,7 +128,7 @@ src/
 │   ├── (client)/        # Panel klienta (login, dashboard)
 │   ├── (frontend)/      # Strona publiczna
 │   └── api/
-│       ├── client/      # API klienta (download, preview, files, hls, download-zip)
+│       ├── client/      # API klienta (download, preview, files, download-zip)
 │       ├── clients/     # Auth (login, logout, send-credentials)
 │       ├── cron/        # Cleanup wygasłych kont
 │       ├── upload/      # Chunked upload (init, chunk, complete, cleanup)
@@ -153,7 +153,7 @@ src/
 ### Wygasanie kont
 - Login: wygasłe ≤3 dni → "konto wygasło", >3 dni → generyczny błąd
 - Cron (3:00 AM): kasuje konta wygasłe >3 dni + ich pliki (cascade delete)
-- `beforeDelete` hook kasuje `client-files` → `afterDelete` czyści fizyczne pliki + HLS + thumbnails
+- `beforeDelete` hook kasuje `client-files` → `afterDelete` czyści fizyczne pliki
 
 ### Upload plików
 - `init` → UUID + tmp dir → `chunk` (10MB) → `complete` (assembly) → cleanup tmp

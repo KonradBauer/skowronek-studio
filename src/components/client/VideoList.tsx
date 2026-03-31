@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { HLSPlayer } from './HLSPlayer'
 import { formatFileSize } from '@/lib/format'
 
 interface FileData {
@@ -11,7 +10,6 @@ interface FileData {
   displayName?: string
   mimeType: string
   filesize: number
-  hlsStatus?: string
 }
 
 interface VideoListProps {
@@ -73,20 +71,13 @@ export function VideoList({ videos }: VideoListProps) {
               {/* Player */}
               {isPlaying && (
                 <div className="relative aspect-video w-full bg-black">
-                  {video.hlsStatus === 'ready' ? (
-                    <HLSPlayer
-                      hlsSrc={`/api/client/hls/${video.id}/master.m3u8`}
-                      fallbackSrc={`/api/client/preview/${video.id}`}
-                    />
-                  ) : (
-                    <video
-                      src={`/api/client/preview/${video.id}`}
-                      className="h-full w-full"
-                      controls
-                      autoPlay
-                      controlsList="nodownload"
-                    />
-                  )}
+                  <video
+                    src={`/api/client/preview/${video.id}`}
+                    className="h-full w-full"
+                    controls
+                    autoPlay
+                    controlsList="nodownload"
+                  />
                 </div>
               )}
 

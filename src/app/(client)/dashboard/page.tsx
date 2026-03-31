@@ -76,7 +76,6 @@ export default async function DashboardPage() {
     mimeType: String(doc.mimeType || 'application/octet-stream'),
     filesize: Number(doc.filesize || 0),
     category: String(doc.category || (doc.mimeType?.startsWith('video/') ? 'video' : 'photo')) as 'photo' | 'video',
-    hlsStatus: doc.hlsStatus ? String(doc.hlsStatus) : undefined,
   })
 
   const initialPhotos = photosResult.docs.map(mapFile)

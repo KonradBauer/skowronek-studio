@@ -29,6 +29,7 @@ export async function generateClientZip(
       },
       limit: 1,
       overrideAccess: true,
+      select: { zipFilename: true },
     })
 
     let cacheDocId: number | string
@@ -67,6 +68,7 @@ export async function generateClientZip(
       where: whereClause,
       limit: 2000,
       overrideAccess: true,
+      select: { filename: true, displayName: true },
     })
 
     if (filesResult.docs.length === 0) {

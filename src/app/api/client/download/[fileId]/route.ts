@@ -20,6 +20,7 @@ export async function GET(
   const file = await payload.findByID({
     collection: 'client-files',
     id: fileId,
+    select: { client: true, filename: true, mimeType: true },
   })
 
   if (!file) {

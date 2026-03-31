@@ -41,20 +41,12 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   for (const client of expiredClients.docs) {
     try {
       // Count files before deletion (for reporting)
-      let page = 1
-      let hasMore = true
-      while (hasMore) {
-        const files = await payload.find({
-          collection: 'client-files',
-          where: { client: { equals: client.id } },
-          limit: 100,
-          page,
-          overrideAccess: true,
-        })
-        result.filesRemoved += files.docs.length
-        hasMore = files.hasNextPage
-        page++
-      }
+      const { totalDocs } = await payload.count({
+        collection: 'client-files',
+        where: { client: { equals: client.id } },
+        overrideAccess: true,
+      })
+      result.filesRemoved += totalDocs
 
       // Delete client entirely - beforeDelete hook cascades to files first
       await payload.delete({

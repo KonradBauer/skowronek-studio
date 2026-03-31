@@ -1,8 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { FILE_CATEGORIES } from '@/lib/constants'
 import { invalidateZipCache } from '@/lib/zip-generator'
-import { rm } from 'fs/promises'
-import path from 'path'
 
 export const ClientFiles: CollectionConfig = {
   slug: 'client-files',
@@ -56,30 +54,6 @@ export const ClientFiles: CollectionConfig = {
         description: 'Opcjonalna nazwa przyjazna dla klienta',
       },
     },
-    {
-      name: 'videoThumbnail',
-      type: 'text',
-      label: 'Miniaturka wideo',
-      admin: { hidden: true },
-    },
-    {
-      name: 'hlsStatus',
-      type: 'select',
-      defaultValue: 'none',
-      options: [
-        { label: 'Brak', value: 'none' },
-        { label: 'W kolejce', value: 'pending' },
-        { label: 'Przetwarzanie', value: 'processing' },
-        { label: 'Gotowe', value: 'ready' },
-        { label: 'Blad', value: 'error' },
-      ],
-      admin: { readOnly: true },
-    },
-    {
-      name: 'hlsPath',
-      type: 'text',
-      admin: { hidden: true },
-    },
   ],
   hooks: {
     beforeChange: [
@@ -106,17 +80,6 @@ export const ClientFiles: CollectionConfig = {
           invalidateZipCache(req.payload, clientId, doc.category || 'photo').catch(console.error)
         }
 
-        // Cleanup video thumbnail
-        if (doc.videoThumbnail) {
-          const thumbPath = path.resolve('uploads', 'client-files', doc.videoThumbnail)
-          rm(thumbPath, { force: true }).catch(console.error)
-        }
-
-        // Cleanup HLS transcoded files
-        if (doc.hlsPath || doc.hlsStatus === 'ready') {
-          const hlsDir = path.resolve('uploads', 'hls', String(doc.id))
-          rm(hlsDir, { recursive: true, force: true }).catch(console.error)
-        }
 
       },
     ],

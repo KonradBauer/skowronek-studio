@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     where,
     limit: 2000,
     sort: 'filename',
+    select: { filename: true, displayName: true },
   })
 
   if (filesResult.docs.length === 0) {
@@ -42,6 +43,11 @@ export async function GET(req: NextRequest) {
   const passThrough = new PassThrough()
   archive.pipe(passThrough)
 
+  // Import S3 command once outside the loop (not on every iteration)
+  const GetObjectCommand = process.env.S3_BUCKET
+    ? (await import('@aws-sdk/client-s3')).GetObjectCommand
+    : null
+
   for (const doc of filesResult.docs) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fileDoc = doc as any
@@ -50,8 +56,7 @@ export async function GET(req: NextRequest) {
 
     const entryName = String(fileDoc.displayName || fileDoc.filename || 'plik')
 
-    if (process.env.S3_BUCKET) {
-      const { GetObjectCommand } = await import('@aws-sdk/client-s3')
+    if (process.env.S3_BUCKET && GetObjectCommand) {
       const response = await getS3Client().send(new GetObjectCommand({
         Bucket: process.env.S3_BUCKET,
         Key: `client-files/${filename}`,
