@@ -17,12 +17,17 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
     errors: [],
   }
 
-  // Find expired active clients
+  // Delete clients only after 3-day grace period past expiration.
+  // During grace period, login shows "account expired" message;
+  // after that, the account is removed entirely.
+  const graceCutoff = new Date()
+  graceCutoff.setDate(graceCutoff.getDate() - 3)
+
   const expiredClients = await payload.find({
     collection: 'clients',
     where: {
       and: [
-        { expiresAt: { less_than: new Date().toISOString() } },
+        { expiresAt: { less_than: graceCutoff.toISOString() } },
         { isActive: { equals: true } },
       ],
     },

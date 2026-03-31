@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+/** Days after expiration during which we still show "account expired" message */
+const EXPIRED_GRACE_DAYS = 3
+
 function isSecureRequest(req: NextRequest): boolean {
   if (req.nextUrl.protocol === 'https:') return true
   if (req.headers.get('x-forwarded-proto') === 'https') return true
@@ -37,13 +40,32 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Block login for expired accounts
+    // Check account expiration BEFORE setting any cookie
     const user = result.user as { expiresAt?: string }
-    if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
-      return NextResponse.json(
-        { error: 'Twoje konto wygasło. Skontaktuj się ze studiem, jeśli potrzebujesz przedłużenia.', code: 'ACCOUNT_EXPIRED' },
-        { status: 403 },
-      )
+    if (user.expiresAt) {
+      const expiresAt = new Date(user.expiresAt)
+      const now = new Date()
+
+      if (expiresAt < now) {
+        const daysSinceExpiry = (now.getTime() - expiresAt.getTime()) / (1000 * 60 * 60 * 24)
+
+        if (daysSinceExpiry <= EXPIRED_GRACE_DAYS) {
+          // Within grace period — tell user account expired
+          return NextResponse.json(
+            {
+              error: 'Twoje konto wygasło. Skontaktuj się ze studiem, jeśli potrzebujesz przedłużenia.',
+              code: 'ACCOUNT_EXPIRED',
+            },
+            { status: 403 },
+          )
+        }
+
+        // Past grace period — act as if account doesn't exist
+        return NextResponse.json(
+          { error: 'Nieprawidlowy email lub haslo' },
+          { status: 401 },
+        )
+      }
     }
 
     const response = NextResponse.json({
