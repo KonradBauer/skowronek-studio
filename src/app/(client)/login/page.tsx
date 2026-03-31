@@ -33,7 +33,12 @@ export default function LoginPage() {
         window.location.href = '/dashboard'
         return
       } else {
-        setError('Nieprawidłowy email lub hasło')
+        const body = await res.json().catch(() => null)
+        if (body?.code === 'ACCOUNT_EXPIRED') {
+          setError(body.error)
+        } else {
+          setError('Nieprawidłowy email lub hasło')
+        }
         setLoading(false)
       }
     } catch {

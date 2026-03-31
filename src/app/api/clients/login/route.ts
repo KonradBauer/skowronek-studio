@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Block login for expired accounts
+    const user = result.user as { expiresAt?: string }
+    if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
+      return NextResponse.json(
+        { error: 'Twoje konto wygasło. Skontaktuj się ze studiem, jeśli potrzebujesz przedłużenia.', code: 'ACCOUNT_EXPIRED' },
+        { status: 403 },
+      )
+    }
+
     const response = NextResponse.json({
       user: result.user,
       token: result.token,
