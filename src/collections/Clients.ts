@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
 const DEFAULT_EXPIRY_DAYS = 10
+/** Days after expiration during which we show "account expired" instead of generic error */
+const EXPIRED_GRACE_DAYS = 3
 
 function getDefaultExpiryDate(): string {
   const date = new Date()
@@ -92,6 +94,22 @@ export const Clients: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeLogin: [
+      async ({ user }) => {
+        const expiresAt = (user as { expiresAt?: string }).expiresAt
+        if (!expiresAt) return
+        const expiry = new Date(expiresAt)
+        const now = new Date()
+        if (expiry >= now) return
+
+        const daysSinceExpiry = (now.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24)
+        if (daysSinceExpiry <= EXPIRED_GRACE_DAYS) {
+          throw new Error('ACCOUNT_EXPIRED')
+        }
+        // Past grace period — generic error (as if account doesn't exist)
+        throw new Error('LOGIN_FAILED')
+      },
+    ],
     beforeDelete: [
       async ({ req, id }) => {
         // Cascade delete: remove all client files BEFORE deleting client
