@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { HLSPlayer } from './HLSPlayer'
+import { formatFileSize } from '@/lib/format'
 
 interface FileData {
   id: string
@@ -10,18 +10,10 @@ interface FileData {
   displayName?: string
   mimeType: string
   filesize: number
-  hlsStatus?: string
 }
 
 interface VideoListProps {
   videos: FileData[]
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 export function VideoList({ videos }: VideoListProps) {
@@ -56,7 +48,7 @@ export function VideoList({ videos }: VideoListProps) {
         <div>
           <h2 className="text-lg font-light tracking-wide text-dark">Film</h2>
           <p className="text-sm text-body-muted">
-            {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plikow'} - {formatSize(totalSize)}
+            {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plikow'} - {formatFileSize(totalSize)}
           </p>
         </div>
         {videos.length > 1 && (
@@ -79,20 +71,13 @@ export function VideoList({ videos }: VideoListProps) {
               {/* Player */}
               {isPlaying && (
                 <div className="relative aspect-video w-full bg-black">
-                  {video.hlsStatus === 'ready' ? (
-                    <HLSPlayer
-                      hlsSrc={`/api/client/hls/${video.id}/master.m3u8`}
-                      fallbackSrc={`/api/client/preview/${video.id}`}
-                    />
-                  ) : (
-                    <video
-                      src={`/api/client/preview/${video.id}`}
-                      className="h-full w-full"
-                      controls
-                      autoPlay
-                      controlsList="nodownload"
-                    />
-                  )}
+                  <video
+                    src={`/api/client/preview/${video.id}`}
+                    className="h-full w-full"
+                    controls
+                    autoPlay
+                    controlsList="nodownload"
+                  />
                 </div>
               )}
 
@@ -121,7 +106,7 @@ export function VideoList({ videos }: VideoListProps) {
                   <p className="truncate text-sm font-medium text-dark">
                     {video.displayName || video.filename}
                   </p>
-                  <p className="text-xs text-body-muted">{formatSize(video.filesize)}</p>
+                  <p className="text-xs text-body-muted">{formatFileSize(video.filesize)}</p>
                 </div>
 
                 {/* Download */}

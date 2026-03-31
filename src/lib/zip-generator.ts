@@ -28,6 +28,8 @@ export async function generateClientZip(
         category: { equals: category },
       },
       limit: 1,
+      overrideAccess: true,
+      select: { zipFilename: true },
     })
 
     let cacheDocId: number | string
@@ -37,6 +39,7 @@ export async function generateClientZip(
         collection: 'zip-cache',
         id: cacheDocId,
         data: { status: 'generating', error: '' },
+        overrideAccess: true,
       })
     } else {
       const doc = await payload.create({
@@ -46,6 +49,7 @@ export async function generateClientZip(
           category,
           status: 'generating',
         },
+        overrideAccess: true,
       })
       cacheDocId = doc.id
     }
@@ -63,10 +67,12 @@ export async function generateClientZip(
       collection: 'client-files',
       where: whereClause,
       limit: 2000,
+      overrideAccess: true,
+      select: { filename: true, displayName: true },
     })
 
     if (filesResult.docs.length === 0) {
-      await payload.delete({ collection: 'zip-cache', id: cacheDocId })
+      await payload.delete({ collection: 'zip-cache', id: cacheDocId, overrideAccess: true })
       return
     }
 
@@ -126,6 +132,7 @@ export async function generateClientZip(
         fileCount: filesResult.docs.length,
         generatedAt: new Date().toISOString(),
       },
+      overrideAccess: true,
     })
 
     console.log(`ZIP generated: ${zipFilename} (${filesResult.docs.length} files)`)
@@ -155,6 +162,7 @@ export async function invalidateZipCache(
           category: { equals: cat },
         },
         limit: 10,
+        overrideAccess: true,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -167,7 +175,7 @@ export async function invalidateZipCache(
             // ignore
           }
         }
-        await payload.delete({ collection: 'zip-cache', id: doc.id })
+        await payload.delete({ collection: 'zip-cache', id: doc.id, overrideAccess: true })
       }
     }
   } catch (err) {

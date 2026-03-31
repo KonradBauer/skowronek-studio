@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { FILE_CATEGORIES } from '@/lib/constants'
 
 export const ZipCache: CollectionConfig = {
   slug: 'zip-cache',
@@ -24,11 +25,7 @@ export const ZipCache: CollectionConfig = {
       name: 'category',
       type: 'select',
       required: true,
-      options: [
-        { label: 'Zdjecia', value: 'photo' },
-        { label: 'Filmy', value: 'video' },
-        { label: 'Wszystko', value: 'all' },
-      ],
+      options: [...FILE_CATEGORIES, { label: 'Wszystko', value: 'all' }],
     },
     {
       name: 'status',

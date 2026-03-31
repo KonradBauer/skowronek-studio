@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateAdmin } from '@/lib/auth'
+import { UPLOAD_CHUNK_SIZE, TMP_CLEANUP_CUTOFF_MS } from '@/lib/constants'
 import { mkdir, readdir, stat, rm } from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   const tmpBase = path.resolve('uploads', 'tmp')
   try {
     const dirs = await readdir(tmpBase)
-    const cutoff = Date.now() - 60 * 60 * 1000
+    const cutoff = Date.now() - TMP_CLEANUP_CUTOFF_MS
     for (const dir of dirs) {
       try {
         const dirStat = await stat(path.join(tmpBase, dir))
@@ -45,6 +46,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     uploadId,
-    chunkSize: 10 * 1024 * 1024, // 10MB
+    chunkSize: UPLOAD_CHUNK_SIZE,
   })
 }

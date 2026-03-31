@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const SEVEN_DAYS = 60 * 60 * 24 * 7
+import { TOKEN_MAX_AGE } from '@/lib/constants'
 
 /** Decode JWT payload without verification (signature is checked later by payload.auth) */
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -62,7 +61,7 @@ export function middleware(request: NextRequest) {
       secure: isSecure,
       path: '/',
       sameSite: 'lax',
-      maxAge: SEVEN_DAYS,
+      maxAge: TOKEN_MAX_AGE,
     })
     return response
   }

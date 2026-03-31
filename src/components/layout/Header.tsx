@@ -8,7 +8,11 @@ import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { Navigation } from './Navigation'
 import { MobileMenu } from './MobileMenu'
 
-export function Header() {
+interface HeaderProps {
+  social?: { facebook?: string; instagram?: string; tiktok?: string }
+}
+
+export function Header({ social }: HeaderProps) {
   useScrollSpy()
 
   const isScrolled = useNavigationStore((s) => s.isScrolled)
@@ -72,7 +76,7 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenu />
+      <MobileMenu social={social} />
     </>
   )
 }

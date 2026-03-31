@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-
-/** Days after expiration during which we show "account expired" instead of generic error */
-const EXPIRED_GRACE_DAYS = 3
+import { EXPIRED_GRACE_DAYS, TOKEN_MAX_AGE } from '@/lib/constants'
 
 function isSecureRequest(req: NextRequest): boolean {
   if (req.nextUrl.protocol === 'https:') return true
@@ -87,7 +85,7 @@ export async function POST(req: NextRequest) {
       secure: isSecureRequest(req),
       path: '/',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: TOKEN_MAX_AGE,
     })
 
     return response

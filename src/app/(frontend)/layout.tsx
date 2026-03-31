@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { StripeTransition } from '@/components/animations/StripeTransition'
@@ -71,15 +73,25 @@ export const metadata: Metadata = {
   },
 }
 
-export default function FrontendLayout({ children }: { children: React.ReactNode }) {
+export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let siteSettings: any = {}
+  try {
+    const payload = await getPayload({ config })
+    siteSettings = await payload.findGlobal({ slug: 'site-settings' })
+  } catch {}
+
+  const contact = siteSettings.contact as { email?: string; phone?: string; address?: string } | undefined
+  const social = siteSettings.social as { facebook?: string; instagram?: string; tiktok?: string } | undefined
+
   return (
     <html lang="pl">
       <body className="frontend antialiased">
-        <JsonLd />
-        <Header />
+        <JsonLd contact={contact} social={social} />
+        <Header social={social} />
         <StripeTransition />
         <main>{children}</main>
-        <Footer />
+        <Footer contact={contact} social={social} />
         <ScrollToTop />
         <CookieConsent />
       </body>

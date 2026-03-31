@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { QueryProvider } from './QueryProvider'
 import { PhotoGrid } from './PhotoGrid'
 import { VideoList } from './VideoList'
+import { formatFileSize } from '@/lib/format'
 
 interface FileData {
   id: string
@@ -12,7 +13,6 @@ interface FileData {
   mimeType: string
   filesize: number
   category: 'photo' | 'video'
-  hlsStatus?: string
 }
 
 interface ClientDashboardProps {
@@ -20,12 +20,6 @@ interface ClientDashboardProps {
   totalPhotoCount: number
   totalPhotoSize: number
   videos: FileData[]
-}
-
-function formatTotalSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
 }
 
 export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize, videos }: ClientDashboardProps) {
@@ -85,7 +79,7 @@ export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize
           <div className="text-center">
             <h3 className="text-lg font-light tracking-wide text-dark">Zdjecia</h3>
             <p className="mt-1 text-sm text-body-muted">
-              {totalPhotoCount} {totalPhotoCount === 1 ? 'zdjecie' : totalPhotoCount < 5 ? 'zdjecia' : 'zdjec'} - {formatTotalSize(totalPhotoSize)}
+              {totalPhotoCount} {totalPhotoCount === 1 ? 'zdjecie' : totalPhotoCount < 5 ? 'zdjecia' : 'zdjec'} - {formatFileSize(totalPhotoSize)}
             </p>
           </div>
         </button>
@@ -104,7 +98,7 @@ export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize
           <div className="text-center">
             <h3 className="text-lg font-light tracking-wide text-dark">Film</h3>
             <p className="mt-1 text-sm text-body-muted">
-              {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plikow'} - {formatTotalSize(videos.reduce((s, f) => s + f.filesize, 0))}
+              {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plikow'} - {formatFileSize(videos.reduce((s, f) => s + f.filesize, 0))}
             </p>
           </div>
         </button>

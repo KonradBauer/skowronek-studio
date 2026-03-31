@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateClient } from '@/lib/auth'
+import { verifyFileOwnership } from '@/lib/file-utils'
+import { getS3Client, PRESIGNED_URL_EXPIRY } from '@/lib/s3'
 import path from 'path'
 import { access, stat } from 'fs/promises'
 import { createReadStream } from 'fs'
@@ -15,10 +17,10 @@ export async function GET(
   if (!auth.success) return auth.response
   const { user, payload } = auth.data
 
-  // Fetch file and verify ownership
   const file = await payload.findByID({
     collection: 'client-files',
     id: fileId,
+    select: { client: true, filename: true, mimeType: true },
   })
 
   if (!file) {
@@ -27,8 +29,7 @@ export async function GET(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fileDoc = file as any
-  const fileClientId = typeof fileDoc.client === 'object' ? Number(fileDoc.client.id) : Number(fileDoc.client)
-  if (fileClientId !== Number(user.id)) {
+  if (!verifyFileOwnership(fileDoc, user.id)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -37,27 +38,16 @@ export async function GET(
 
   // S3 mode - generate presigned URL
   if (process.env.S3_BUCKET) {
-    const { S3Client, GetObjectCommand } = await import('@aws-sdk/client-s3')
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3')
     const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner')
 
-    const s3 = new S3Client({
-      endpoint: process.env.S3_ENDPOINT,
-      region: process.env.S3_REGION || 'auto',
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
-      },
-      forcePathStyle: true,
-    })
-
-    const key = `client-files/${filename}`
     const command = new GetObjectCommand({
       Bucket: process.env.S3_BUCKET,
-      Key: key,
+      Key: `client-files/${filename}`,
       ResponseContentDisposition: `attachment; filename="${filename}"`,
     })
 
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+    const url = await getSignedUrl(getS3Client(), command, { expiresIn: PRESIGNED_URL_EXPIRY })
     return NextResponse.json({ url })
   }
 

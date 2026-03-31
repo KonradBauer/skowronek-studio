@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 import { readdir, rm, stat } from 'fs/promises'
 import path from 'path'
+import { EXPIRED_GRACE_DAYS, TMP_CLEANUP_CUTOFF_MS } from './constants'
 
 interface CleanupResult {
   processed: number
@@ -21,7 +22,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   // During grace period, login shows "account expired" message;
   // after that, the account is removed entirely.
   const graceCutoff = new Date()
-  graceCutoff.setDate(graceCutoff.getDate() - 3)
+  graceCutoff.setDate(graceCutoff.getDate() - EXPIRED_GRACE_DAYS)
 
   const expiredClients = await payload.find({
     collection: 'clients',
@@ -40,20 +41,12 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   for (const client of expiredClients.docs) {
     try {
       // Count files before deletion (for reporting)
-      let page = 1
-      let hasMore = true
-      while (hasMore) {
-        const files = await payload.find({
-          collection: 'client-files',
-          where: { client: { equals: client.id } },
-          limit: 100,
-          page,
-          overrideAccess: true,
-        })
-        result.filesRemoved += files.docs.length
-        hasMore = files.hasNextPage
-        page++
-      }
+      const { totalDocs } = await payload.count({
+        collection: 'client-files',
+        where: { client: { equals: client.id } },
+        overrideAccess: true,
+      })
+      result.filesRemoved += totalDocs
 
       // Delete client entirely - beforeDelete hook cascades to files first
       await payload.delete({
@@ -72,7 +65,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   try {
     const tmpBase = path.resolve('uploads', 'tmp')
     const dirs = await readdir(tmpBase).catch(() => [] as string[])
-    const cutoff = Date.now() - 60 * 60 * 1000
+    const cutoff = Date.now() - TMP_CLEANUP_CUTOFF_MS
     for (const dir of dirs) {
       try {
         const dirPath = path.join(tmpBase, dir)
@@ -80,9 +73,9 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
         if (dirStat.mtimeMs < cutoff) {
           await rm(dirPath, { recursive: true, force: true })
         }
-      } catch { /* ignore */ }
+      } catch (err) { console.error('tmp dir cleanup:', err) }
     }
-  } catch { /* ignore */ }
+  } catch (err) { console.error('tmp cleanup scan:', err) }
 
   return result
 }
