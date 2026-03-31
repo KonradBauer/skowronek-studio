@@ -121,7 +121,7 @@ export async function GET(
     if (size === 'thumbnail') {
       try {
         const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-thumb.jpg`), 400, 50)
-        return new NextResponse(buffer, {
+        return new NextResponse(new Uint8Array(buffer), {
           headers: {
             'Content-Type': 'image/jpeg',
             'Content-Length': String(buffer.length),
@@ -136,7 +136,7 @@ export async function GET(
     if (size === 'medium') {
       try {
         const buffer = await getOrCreateOptimized(fullPath, path.join(cacheDir, `${base}-medium.jpg`), 1920, 70)
-        return new NextResponse(buffer, {
+        return new NextResponse(new Uint8Array(buffer), {
           headers: {
             'Content-Type': 'image/jpeg',
             'Content-Length': String(buffer.length),
