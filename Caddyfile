@@ -1,7 +1,3 @@
 skowronekstudio.pl {
-	reverse_proxy site1:3000
-}
-
-rezonansstudio.pl {
-	reverse_proxy site2:3000
+	reverse_proxy site:3000
 }

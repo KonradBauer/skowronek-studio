@@ -14,28 +14,27 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - site1
-      - site2
+      - site
 
   # ──────────────────────────────────────
-  # Site 1 - skowronekstudio.pl
+  # Skowronek Studio - skowronekstudio.pl
   # ──────────────────────────────────────
-  db1:
+  db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: skowronekstudio
       POSTGRES_USER: payload
-      POSTGRES_PASSWORD: ${DB1_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/db/site1:/var/lib/postgresql/data
+      - ${STORAGE_PATH:-/mnt/storage}/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U payload -d skowronekstudio"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  site1:
+  site:
     build:
       context: .
       args:
@@ -43,69 +42,24 @@ services:
         NEXT_PUBLIC_SERVER_URL: https://skowronekstudio.pl
     restart: unless-stopped
     depends_on:
-      db1:
+      db:
         condition: service_healthy
     environment:
-      DATABASE_URI: postgresql://payload:${DB1_PASSWORD}@db1:5432/skowronekstudio
-      PAYLOAD_SECRET: ${SITE1_PAYLOAD_SECRET}
-      CRON_SECRET: ${SITE1_CRON_SECRET}
+      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      CRON_SECRET: ${CRON_SECRET}
       NEXT_PUBLIC_SITE_URL: https://skowronekstudio.pl
       NEXT_PUBLIC_SERVER_URL: https://skowronekstudio.pl
       # SMTP
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SITE1_SMTP_USER}
-      SMTP_PASS: ${SITE1_SMTP_PASS}
-      SMTP_FROM: ${SITE1_SMTP_FROM}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
       # Google Reviews (opcjonalnie)
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
     volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/uploads/site1:/app/uploads
-
-  # ──────────────────────────────────────
-  # Site 2 - rezonansstudio.pl
-  # ──────────────────────────────────────
-  db2:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: rezonansstudio
-      POSTGRES_USER: payload
-      POSTGRES_PASSWORD: ${DB2_PASSWORD}
-    volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/db/site2:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U payload -d rezonansstudio"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  site2:
-    build:
-      context: .
-      args:
-        NEXT_PUBLIC_SITE_URL: https://rezonansstudio.pl
-        NEXT_PUBLIC_SERVER_URL: https://rezonansstudio.pl
-    restart: unless-stopped
-    depends_on:
-      db2:
-        condition: service_healthy
-    environment:
-      DATABASE_URI: postgresql://payload:${DB2_PASSWORD}@db2:5432/rezonansstudio
-      PAYLOAD_SECRET: ${SITE2_PAYLOAD_SECRET}
-      CRON_SECRET: ${SITE2_CRON_SECRET}
-      NEXT_PUBLIC_SITE_URL: https://rezonansstudio.pl
-      NEXT_PUBLIC_SERVER_URL: https://rezonansstudio.pl
-      # SMTP
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SITE2_SMTP_USER}
-      SMTP_PASS: ${SITE2_SMTP_PASS}
-      SMTP_FROM: ${SITE2_SMTP_FROM}
-      # Google Reviews (opcjonalnie)
-      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
-    volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/uploads/site2:/app/uploads
+      - ${STORAGE_PATH:-/mnt/storage}/uploads:/app/uploads
 
 volumes:
   caddy_data:
