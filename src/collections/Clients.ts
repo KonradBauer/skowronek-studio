@@ -81,7 +81,7 @@ export const Clients: CollectionConfig = {
           pickerAppearance: 'dayOnly',
           displayFormat: 'dd.MM.yyyy',
         },
-        description: `Domyslnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto i pliki zostana automatycznie usuniete.`,
+        description: `Domyślnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto i pliki zostaną automatycznie usunięte.`,
       },
     },
     {

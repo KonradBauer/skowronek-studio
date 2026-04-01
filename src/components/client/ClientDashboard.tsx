@@ -77,9 +77,9 @@ export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize
             </svg>
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-light tracking-wide text-dark">Zdjecia</h3>
+            <h3 className="text-lg font-light tracking-wide text-dark">Zdjęcia</h3>
             <p className="mt-1 text-sm text-body-muted">
-              {totalPhotoCount} {totalPhotoCount === 1 ? 'zdjecie' : totalPhotoCount < 5 ? 'zdjecia' : 'zdjec'} - {formatFileSize(totalPhotoSize)}
+              {totalPhotoCount} {totalPhotoCount === 1 ? 'zdjęcie' : totalPhotoCount < 5 ? 'zdjęcia' : 'zdjęć'} - {formatFileSize(totalPhotoSize)}
             </p>
           </div>
         </button>
@@ -98,7 +98,7 @@ export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize
           <div className="text-center">
             <h3 className="text-lg font-light tracking-wide text-dark">Film</h3>
             <p className="mt-1 text-sm text-body-muted">
-              {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plikow'} - {formatFileSize(videos.reduce((s, f) => s + f.filesize, 0))}
+              {videos.length} {videos.length === 1 ? 'plik' : videos.length < 5 ? 'pliki' : 'plików'} - {formatFileSize(videos.reduce((s, f) => s + f.filesize, 0))}
             </p>
           </div>
         </button>
@@ -106,8 +106,8 @@ export function ClientDashboard({ initialPhotos, totalPhotoCount, totalPhotoSize
 
       {totalPhotoCount === 0 && videos.length === 0 && (
         <div className="col-span-2 py-12 text-center text-body-muted">
-          <p>Brak plikow do pobrania.</p>
-          <p className="mt-1 text-sm">Skontaktuj sie ze studiem, jesli spodziewasz sie plikow.</p>
+          <p>Brak plików do pobrania.</p>
+          <p className="mt-1 text-sm">Skontaktuj się ze studiem, jeśli spodziewasz się plików.</p>
         </div>
       )}
     </div>

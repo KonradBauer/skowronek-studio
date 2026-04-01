@@ -26,7 +26,7 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
-      label: 'Opis zdjecia (alt)',
+      label: 'Opis zdjęcia (alt)',
     },
   ],
 }

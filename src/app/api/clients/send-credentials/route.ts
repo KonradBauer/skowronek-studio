@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
   // Fetch email template
   const templates = await payload.findGlobal({ slug: 'email-templates', overrideAccess: true })
 
-  const subject = (templates?.clientCredentials?.subject as string) || 'Twoje zdjecia sa gotowe - Skowronek Studio'
+  const subject = (templates?.clientCredentials?.subject as string) || 'Twoje zdjęcia są gotowe - Skowronek Studio'
   const body =
     (templates?.clientCredentials?.body as string) ||
-    `<p>Czesc {{clientName}}, Twoj login: {{email}}, haslo: {{password}}</p>`
+    `<p>Cześć {{clientName}}, Twój login: {{email}}, hasło: {{password}}</p>`
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://skowronekstudio.pl'
   const expiresAt = client.expiresAt
@@ -68,11 +68,11 @@ export async function POST(req: NextRequest) {
       html: replacePlaceholders(body),
     })
 
-    return NextResponse.json({ success: true, message: 'Email wyslany pomyslnie' })
+    return NextResponse.json({ success: true, message: 'Email wysłany pomyślnie' })
   } catch (err) {
-    console.error('Blad wysylania emaila:', err)
+    console.error('Błąd wysyłania emaila:', err)
     return NextResponse.json(
-      { error: 'Nie udalo sie wyslac emaila. Sprawdz konfiguracje SMTP.' },
+      { error: 'Nie udało się wysłać emaila. Sprawdź konfigurację SMTP.' },
       { status: 500 },
     )
   }

@@ -67,7 +67,7 @@ async function uploadChunked(
 
   if (!initRes.ok) {
     const err = await initRes.json().catch(() => ({}))
-    throw new Error(err.error || `Blad init uploadu (${initRes.status})`)
+    throw new Error(err.error || `Błąd init uploadu (${initRes.status})`)
   }
 
   const { uploadId, chunkSize } = await initRes.json()
@@ -89,7 +89,7 @@ async function uploadChunked(
 
       if (!chunkRes.ok) {
         const err = await chunkRes.json().catch(() => ({}))
-        throw new Error(err.error || `Blad uploadu chunk ${i} (${chunkRes.status})`)
+        throw new Error(err.error || `Błąd uploadu chunk ${i} (${chunkRes.status})`)
       }
 
       bytesUploaded = end
@@ -113,7 +113,7 @@ async function uploadChunked(
 
     if (!completeRes.ok) {
       const err = await completeRes.json().catch(() => ({}))
-      throw new Error(err.error || `Blad zakonczenia uploadu (${completeRes.status})`)
+      throw new Error(err.error || `Błąd zakończenia uploadu (${completeRes.status})`)
     }
   } catch (err) {
     // Cleanup chunks on any failure so retry starts fresh
@@ -217,7 +217,7 @@ export const BulkUploadPanel = () => {
   }, [fetchExistingFiles])
 
   const handleDeleteAll = async () => {
-    if (!confirm(`Usunac WSZYSTKIE pliki tego klienta? (${existingFiles.length} plikow)`)) return
+    if (!confirm(`Usunąć WSZYSTKIE pliki tego klienta? (${existingFiles.length} plików)`)) return
     setIsDeletingAll(true)
     try {
       for (const file of existingFiles) {
@@ -232,7 +232,7 @@ export const BulkUploadPanel = () => {
   }
 
   const handleDeleteFile = async (fileId: number) => {
-    if (!confirm('Usunac ten plik?')) return
+    if (!confirm('Usunąć ten plik?')) return
     setDeletingId(fileId)
     try {
       const res = await fetch(`/api/client-files/${fileId}`, { method: 'DELETE' })
@@ -338,7 +338,7 @@ export const BulkUploadPanel = () => {
             inProgressBytes.delete(key)
             setPhotos((prev) =>
               prev.map((p, idx) =>
-                idx === item.idx ? { ...p, status: 'error', error: err instanceof Error ? err.message : 'Blad' } : p,
+                idx === item.idx ? { ...p, status: 'error', error: err instanceof Error ? err.message : 'Błąd' } : p,
               ),
             )
           }
@@ -398,7 +398,7 @@ export const BulkUploadPanel = () => {
         inProgressBytes.delete(key)
         setVideos((prev) =>
           prev.map((v, idx) =>
-            idx === item.idx ? { ...v, status: 'error', error: err instanceof Error ? err.message : 'Blad' } : v,
+            idx === item.idx ? { ...v, status: 'error', error: err instanceof Error ? err.message : 'Błąd' } : v,
           ),
         )
       }
@@ -417,7 +417,7 @@ export const BulkUploadPanel = () => {
   if (!id) {
     return (
       <div style={styles.container}>
-        <p style={styles.hint}>Zapisz klienta przed dodaniem plikow.</p>
+        <p style={styles.hint}>Zapisz klienta przed dodaniem plików.</p>
       </div>
     )
   }
@@ -453,7 +453,7 @@ export const BulkUploadPanel = () => {
                 cursor: isDeletingAll ? 'not-allowed' : 'pointer',
               }}
             >
-              {isDeletingAll ? 'Usuwanie...' : `Usun wszystkie (${existingFiles.length})`}
+              {isDeletingAll ? 'Usuwanie...' : `Usuń wszystkie (${existingFiles.length})`}
             </button>
           </div>
 
@@ -461,7 +461,7 @@ export const BulkUploadPanel = () => {
             <div style={styles.section}>
               <div style={styles.sectionHeader}>
                 <span style={styles.sectionTitle}>
-                  Zdjecia ({existingPhotos.length}) - {formatFileSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
+                  Zdjęcia ({existingPhotos.length}) - {formatFileSize(existingPhotos.reduce((s, f) => s + f.filesize, 0))}
                 </span>
               </div>
             </div>
@@ -528,7 +528,7 @@ export const BulkUploadPanel = () => {
         <div style={{ marginBottom: '20px' }}>
           <h3 style={styles.title}>Wgrane pliki klienta</h3>
           <div style={styles.section}>
-            <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>Ladowanie plikow...</div>
+            <div style={{ fontSize: '13px', color: '#999', fontStyle: 'italic' }}>Ładowanie plików...</div>
           </div>
         </div>
       )}
@@ -538,7 +538,7 @@ export const BulkUploadPanel = () => {
         <div style={{ marginBottom: '16px', padding: '12px', background: '#FAF7F2', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#826D4C' }}>
-              Wgrywanie: {uploadStats.filesDone}/{uploadStats.filesTotal} plikow
+              Wgrywanie: {uploadStats.filesDone}/{uploadStats.filesTotal} plików
             </span>
             <span style={{ fontSize: '12px', color: '#666' }}>
               {uploadStats.speed > 0 ? `${formatFileSize(uploadStats.speed)}/s` : '...'} | ~{formatEta(uploadStats.eta)}
@@ -560,7 +560,7 @@ export const BulkUploadPanel = () => {
       )}
 
       {/* Upload section */}
-      <h3 style={styles.title}>Wgrywanie nowych plikow</h3>
+      <h3 style={styles.title}>Wgrywanie nowych plików</h3>
 
       {/* Drop zone */}
       <div
@@ -577,7 +577,7 @@ export const BulkUploadPanel = () => {
         }}
       >
         <p style={styles.dropText}>
-          Przeciagnij pliki tutaj lub wybierz ponizej
+          Przeciągnij pliki tutaj lub wybierz poniżej
         </p>
         <div style={styles.buttonRow}>
           <button
@@ -586,7 +586,7 @@ export const BulkUploadPanel = () => {
             disabled={isUploading}
             style={styles.selectBtn}
           >
-            + Zdjecia
+            + Zdjęcia
           </button>
           <button
             type="button"
@@ -621,10 +621,10 @@ export const BulkUploadPanel = () => {
           {photos.length > 0 && (
             <div style={{ ...styles.sectionHeader, marginBottom: photos.some((p) => p.status === 'error') ? '4px' : '0' }}>
               <span style={styles.sectionTitle}>
-                Zdjecia ({photos.length}) - {formatFileSize(totalPhotoSize)}
+                Zdjęcia ({photos.length}) - {formatFileSize(totalPhotoSize)}
               </span>
               {!isUploading && (
-                <button type="button" onClick={() => setPhotos([])} style={styles.clearBtn}>Wyczysc</button>
+                <button type="button" onClick={() => setPhotos([])} style={styles.clearBtn}>Wyczyść</button>
               )}
             </div>
           )}
@@ -641,7 +641,7 @@ export const BulkUploadPanel = () => {
                   Filmy ({videos.length}) - {formatFileSize(totalVideoSize)}
                 </span>
                 {!isUploading && (
-                  <button type="button" onClick={() => setVideos([])} style={styles.clearBtn}>Wyczysc</button>
+                  <button type="button" onClick={() => setVideos([])} style={styles.clearBtn}>Wyczyść</button>
                 )}
               </div>
               {videos.map((video, i) => (
@@ -650,11 +650,11 @@ export const BulkUploadPanel = () => {
                   <span style={{ fontSize: '12px', color: '#999', flexShrink: 0 }}>{formatFileSize(video.file.size)}</span>
                   {video.status === 'processing' && (
                     <span style={styles.videoStatusProcessing}>
-                      <span style={styles.spinner} /> {'\u0141\u0105czenie pliku...'}
+                      <span style={styles.spinner} /> {'Łączenie pliku...'}
                     </span>
                   )}
                   {video.status === 'done' && (
-                    <span style={styles.videoStatusDone}>{'Film zosta\u0142 pomy\u015Blnie wgrany!'}</span>
+                    <span style={styles.videoStatusDone}>{'Film został pomyślnie wgrany!'}</span>
                   )}
                   {video.status === 'error' && (
                     <span style={styles.videoStatusError}>{video.error}</span>
@@ -681,7 +681,7 @@ export const BulkUploadPanel = () => {
                   cursor: isUploading ? 'not-allowed' : 'pointer',
                 }}
               >
-                {isUploading ? 'Wgrywanie...' : `Wgraj ${pendingCount} plikow (${formatFileSize(totalPhotoSize + totalVideoSize)})`}
+                {isUploading ? 'Wgrywanie...' : `Wgraj ${pendingCount} plików (${formatFileSize(totalPhotoSize + totalVideoSize)})`}
               </button>
             </div>
           )}

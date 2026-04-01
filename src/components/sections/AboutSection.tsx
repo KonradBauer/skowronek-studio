@@ -13,9 +13,9 @@ interface AboutData {
 }
 
 const FALLBACK_PARAGRAPHS = [
-  'Skowronek Studio to miejsce, gdzie pasja do fotografii spotyka sie z profesjonalizmem. Specjalizujemy sie w fotografii slubnej, portretowej i rodzinnej.',
-  'Kazda sesja to dla nas unikalna historia - Twoja historia. Laczymy naturalnosc z artystyczna wizja, tworzac obrazy, ktore beda Ci towarzyszyc przez lata.',
-  'Wierzymy, ze najpiekniejsze kadry powstaja wtedy, gdy czujesz sie swobodnie. Dlatego stawiamy na relacje i atmosfere, dzieki ktorej zdjecia oddaja prawdziwe emocje.',
+  'Skowronek Studio to miejsce, gdzie pasja do fotografii spotyka się z profesjonalizmem. Specjalizujemy się w fotografii ślubnej, portretowej i rodzinnej.',
+  'Każda sesja to dla nas unikalna historia - Twoja historia. Łączymy naturalność z artystyczną wizją, tworząc obrazy, które będą Ci towarzyszyć przez lata.',
+  'Wierzymy, że najpiękniejsze kadry powstają wtedy, gdy czujesz się swobodnie. Dlatego stawiamy na relacje i atmosferę, dzięki której zdjęcia oddają prawdziwe emocje.',
 ]
 
 export function AboutSection({ data }: { data: AboutData }) {

@@ -17,7 +17,7 @@ export const SendCredentialsButton = () => {
     }
 
     const password = window.prompt(
-      'Wklej haslo klienta (ze schowka po kliknieciu "Generuj haslo").\n\nHasla nie mozna odczytac po zapisaniu - musisz je wkleic recznie:',
+      'Wklej hasło klienta (ze schowka po kliknięciu "Generuj hasło").\n\nHaseł nie można odczytać po zapisaniu - musisz je wkleić ręcznie:',
     )
 
     if (!password) return
@@ -38,11 +38,11 @@ export const SendCredentialsButton = () => {
         setStatus('sent')
         setTimeout(() => setStatus('idle'), 5000)
       } else {
-        setErrorMsg(data.error || 'Blad wysylania')
+        setErrorMsg(data.error || 'Błąd wysyłania')
         setStatus('error')
       }
     } catch {
-      setErrorMsg('Blad polaczenia z serwerem')
+      setErrorMsg('Błąd połączenia z serwerem')
       setStatus('error')
     }
   }
@@ -55,10 +55,10 @@ export const SendCredentialsButton = () => {
   }
 
   const labels: Record<string, string> = {
-    idle: 'Wyslij dane logowania na email',
-    sending: 'Wysylanie...',
-    sent: 'Wyslano!',
-    error: 'Blad - sprobuj ponownie',
+    idle: 'Wyślij dane logowania na email',
+    sending: 'Wysyłanie...',
+    sent: 'Wysłano!',
+    error: 'Błąd - spróbuj ponownie',
   }
 
   return (

@@ -19,23 +19,23 @@ interface ServicesData {
 
 const FALLBACK_SERVICES: ServiceItem[] = [
   {
-    title: 'Fotografia slubna',
-    description: 'Kompleksowa obsluga Waszego najpiekniejszego dnia - od przygotowan po ostatni taniec.',
+    title: 'Fotografia ślubna',
+    description: 'Kompleksowa obsługa Waszego najpiękniejszego dnia - od przygotowań po ostatni taniec.',
     image: '/images/service-wedding.jpg',
   },
   {
     title: 'Sesje portretowe',
-    description: 'Profesjonalne portrety biznesowe i artystyczne, ktore oddaja Twoja osobowosc.',
+    description: 'Profesjonalne portrety biznesowe i artystyczne, które oddają Twoją osobowość.',
     image: '/images/service-portrait.jpg',
   },
   {
     title: 'Fotografia rodzinna',
-    description: 'Naturalne sesje rodzinne w studio lub plenerze. Chrzciny, rocznice, codziennosc.',
+    description: 'Naturalne sesje rodzinne w studio lub plenerze. Chrzciny, rocznice, codzienność.',
     image: '/images/service-family.jpg',
   },
   {
     title: 'Film',
-    description: 'Reportaze wideo i teledyski slubne. Ruchome obrazy, ktore opowiadaja Wasza historie.',
+    description: 'Reportaże wideo i teledyski ślubne. Ruchome obrazy, które opowiadają Waszą historię.',
     image: '/images/service-film.jpg',
   },
 ]

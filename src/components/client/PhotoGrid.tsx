@@ -224,7 +224,7 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
     setDownloadStatus('downloading')
     const link = document.createElement('a')
     link.href = '/api/client/download-zip?category=photo'
-    link.download = 'Zdjecia.zip'
+    link.download = 'Zdjęcia.zip'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -238,7 +238,7 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p className="mt-4 text-sm tracking-wide text-body-muted">Prosze czekac, ladowanie galerii...</p>
+        <p className="mt-4 text-sm tracking-wide text-body-muted">Proszę czekać, ładowanie galerii...</p>
       </div>
     )
   }
@@ -248,14 +248,14 @@ export function PhotoGrid({ initialPhotos, totalCount, totalSize }: PhotoGridPro
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-light tracking-wide text-dark">Zdjecia</h2>
+          <h2 className="text-lg font-light tracking-wide text-dark">Zdjęcia</h2>
           <p className="text-sm text-body-muted">
-            {totalCount} {totalCount === 1 ? 'zdjecie' : totalCount < 5 ? 'zdjecia' : 'zdjec'} -{' '}
+            {totalCount} {totalCount === 1 ? 'zdjęcie' : totalCount < 5 ? 'zdjęcia' : 'zdjęć'} -{' '}
             {formatFileSize(totalSize)}
           </p>
         </div>
         <Button onClick={handleDownloadZip} disabled={downloadStatus === 'downloading'}>
-          {downloadStatus === 'downloading' ? 'Rozpoczeto pobieranie...' : 'Pobierz wszystkie'}
+          {downloadStatus === 'downloading' ? 'Rozpoczęto pobieranie...' : 'Pobierz wszystkie'}
         </Button>
       </div>
 

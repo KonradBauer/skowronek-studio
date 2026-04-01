@@ -16,13 +16,13 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Nieprawidlowe dane' }, { status: 400 })
+    return NextResponse.json({ error: 'Nieprawidłowe dane' }, { status: 400 })
   }
 
   const { email, password } = body
 
   if (!email || !password) {
-    return NextResponse.json({ error: 'Email i haslo sa wymagane' }, { status: 400 })
+    return NextResponse.json({ error: 'Email i hasło są wymagane' }, { status: 400 })
   }
 
   // Check if account exists and whether it's expired BEFORE attempting login
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
         // Past grace period — generic error as if account doesn't exist
         return NextResponse.json(
-          { error: 'Nieprawidlowy email lub haslo' },
+          { error: 'Nieprawidłowy email lub hasło' },
           { status: 401 },
         )
       }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     if (!result.token) {
       return NextResponse.json(
-        { error: 'Blad serwera - brak tokenu' },
+        { error: 'Błąd serwera - brak tokenu' },
         { status: 500 },
       )
     }
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     return response
   } catch {
     return NextResponse.json(
-      { error: 'Nieprawidlowy email lub haslo' },
+      { error: 'Nieprawidłowy email lub hasło' },
       { status: 401 },
     )
   }

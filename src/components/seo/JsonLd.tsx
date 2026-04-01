@@ -15,7 +15,7 @@ export function JsonLd({ contact, social }: JsonLdProps) {
     '@type': 'PhotographyBusiness',
     name: 'Skowronek Studio',
     description:
-      'Profesjonalne studio fotograficzne specjalizujace sie w fotografii slubnej, portretowej i rodzinnej.',
+      'Profesjonalne studio fotograficzne specjalizujące się w fotografii ślubnej, portretowej i rodzinnej.',
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     image: `${SITE_URL}/og-image.jpg`,
@@ -25,7 +25,7 @@ export function JsonLd({ contact, social }: JsonLdProps) {
       address: {
         '@type': 'PostalAddress',
         streetAddress: contact.address,
-        addressLocality: 'Czestochowa',
+        addressLocality: 'Częstochowa',
         postalCode: '42-200',
         addressCountry: 'PL',
       },
@@ -53,14 +53,14 @@ export function JsonLd({ contact, social }: JsonLdProps) {
     ],
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
-      name: 'Uslugi fotograficzne',
+      name: 'Usługi fotograficzne',
       itemListElement: [
         {
           '@type': 'Offer',
           itemOffered: {
             '@type': 'Service',
-            name: 'Fotografia slubna',
-            description: 'Kompleksowa obsluga fotograficzna slubu i wesela.',
+            name: 'Fotografia ślubna',
+            description: 'Kompleksowa obsługa fotograficzna ślubu i wesela.',
           },
         },
         {
@@ -76,15 +76,15 @@ export function JsonLd({ contact, social }: JsonLdProps) {
           itemOffered: {
             '@type': 'Service',
             name: 'Fotografia rodzinna',
-            description: 'Sesje rodzinne pelne naturalnych emocji.',
+            description: 'Sesje rodzinne pełne naturalnych emocji.',
           },
         },
         {
           '@type': 'Offer',
           itemOffered: {
             '@type': 'Service',
-            name: 'Film slubny',
-            description: 'Filmowanie slubne w jakosci kinowej.',
+            name: 'Film ślubny',
+            description: 'Filmowanie ślubne w jakości kinowej.',
           },
         },
       ],
@@ -97,7 +97,7 @@ export function JsonLd({ contact, social }: JsonLdProps) {
     name: 'Skowronek Studio',
     url: SITE_URL,
     description:
-      'Profesjonalne studio fotograficzne - fotografia slubna, portretowa i rodzinna.',
+      'Profesjonalne studio fotograficzne - fotografia ślubna, portretowa i rodzinna.',
     publisher: {
       '@type': 'Organization',
       name: 'Skowronek Studio',

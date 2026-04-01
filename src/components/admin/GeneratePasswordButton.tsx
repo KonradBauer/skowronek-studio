@@ -36,7 +36,7 @@ export const GeneratePasswordButton = () => {
       setCopied(true)
       setTimeout(() => setCopied(false), 5000)
     } catch {
-      window.prompt('Skopiuj haslo:', password)
+      window.prompt('Skopiuj hasło:', password)
     }
   }
 
@@ -58,7 +58,7 @@ export const GeneratePasswordButton = () => {
             transition: 'background 0.2s',
           }}
         >
-          {copied ? 'Skopiowano do schowka!' : 'Generuj haslo'}
+          {copied ? 'Skopiowano do schowka!' : 'Generuj hasło'}
         </button>
         {generatedPassword && (
           <code
@@ -78,7 +78,7 @@ export const GeneratePasswordButton = () => {
       </div>
       {generatedPassword && (
         <p style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-          Wklej to haslo w pole &quot;Password&quot; ponizej, a nastepnie zapisz klienta.
+          Wklej to hasło w pole &quot;Password&quot; poniżej, a następnie zapisz klienta.
         </p>
       )}
     </div>
