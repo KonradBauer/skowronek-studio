@@ -14,6 +14,22 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+/** Returns true if the token is expired or invalid (checks both JWT exp and custom expiresAt) */
+function isTokenStale(token: string): boolean {
+  const payload = decodeJwtPayload(token)
+  if (!payload) return true
+
+  // Standard JWT exp claim (Payload sets this, value is Unix seconds)
+  const exp = payload.exp as number | undefined
+  if (exp && exp * 1000 < Date.now()) return true
+
+  // Custom account expiry field (saveToJWT: true on the Clients collection)
+  const expiresAt = payload.expiresAt as string | undefined
+  if (expiresAt && new Date(expiresAt) < new Date()) return true
+
+  return false
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isSecure =
@@ -24,11 +40,8 @@ export function middleware(request: NextRequest) {
   if (pathname === '/login') {
     const token = request.cookies.get('client-token')?.value
     if (token) {
-      // Check if account expired before redirecting to dashboard
-      const payload = decodeJwtPayload(token)
-      const expiresAt = payload?.expiresAt as string | undefined
-      if (expiresAt && new Date(expiresAt) < new Date()) {
-        // Expired — clear cookie and show login page
+      if (isTokenStale(token)) {
+        // Expired or invalid — clear cookie and show login page
         const response = NextResponse.next()
         response.cookies.delete('client-token')
         return response
@@ -45,10 +58,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Check if account expired
-    const payload = decodeJwtPayload(token)
-    const expiresAt = payload?.expiresAt as string | undefined
-    if (expiresAt && new Date(expiresAt) < new Date()) {
+    // Check if token is stale (JWT exp or account expiresAt)
+    if (isTokenStale(token)) {
       // Expired — clear cookie and redirect to login
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('client-token')
