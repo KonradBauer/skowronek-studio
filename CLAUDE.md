@@ -143,6 +143,30 @@ src/
 └── styles/              # globals.css (Tailwind v4 theme)
 ```
 
+## Mailing — Resend SDK
+
+**Provider:** [Resend](https://resend.com) (SDK, nie SMTP)
+**Plik:** `src/lib/email.ts` — `sendEmail()`, `isEmailConfigured()`, `escapeHtml()`
+**Używany w:** `src/app/api/clients/send-credentials/route.ts` (button "Wyślij dostęp" w admin panelu)
+
+### Wymagane env vars
+
+```env
+RESEND_API_KEY=re_xxxxxxxxxxxx   # API key z panelu resend.com
+RESEND_FROM_EMAIL=studio@skowronekstudio.pl
+```
+
+### ⏳ DO ZROBIENIA — gdy domena będzie gotowa
+
+1. Założyć konto na resend.com
+2. Dodać domenę `skowronekstudio.pl` → zweryfikować przez DNS (TXT record)
+3. Wygenerować API key w panelu Resend
+4. Ustawić env vars powyżej na VPS
+
+Do tego czasu mailing jest wyłączony (`isEmailConfigured()` zwraca `false`).
+
+---
+
 ## Kluczowe flow
 
 ### Logowanie klienta

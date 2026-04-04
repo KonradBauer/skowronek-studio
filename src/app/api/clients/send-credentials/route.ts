@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
   if (!isEmailConfigured()) {
     return NextResponse.json(
-      { error: 'Email nie jest skonfigurowany. Ustaw zmienne SMTP_HOST, SMTP_USER, SMTP_PASS w .env' },
+      { error: 'Email nie jest skonfigurowany. Ustaw zmienne RESEND_API_KEY, RESEND_FROM_EMAIL w .env' },
       { status: 500 },
     )
   }
