@@ -15,7 +15,7 @@ export const Clients: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'email', 'expiresAt', 'isActive'],
+    defaultColumns: ['name', 'email', 'expiresAt'],
   },
   access: {
     read: ({ req: { user } }) => {
@@ -83,12 +83,6 @@ export const Clients: CollectionConfig = {
         },
         description: `Domyślnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto i pliki zostaną automatycznie usunięte.`,
       },
-    },
-    {
-      name: 'isActive',
-      type: 'checkbox',
-      defaultValue: true,
-      label: 'Aktywny',
     },
   ],
   hooks: {

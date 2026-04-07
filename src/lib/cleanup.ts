@@ -27,10 +27,7 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   const expiredClients = await payload.find({
     collection: 'clients',
     where: {
-      and: [
-        { expiresAt: { less_than: graceCutoff.toISOString() } },
-        { isActive: { equals: true } },
-      ],
+      expiresAt: { less_than: graceCutoff.toISOString() },
     },
     limit: 100,
     overrideAccess: true,
