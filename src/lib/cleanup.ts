@@ -24,6 +24,8 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
   const graceCutoff = new Date()
   graceCutoff.setDate(graceCutoff.getDate() - EXPIRED_GRACE_DAYS)
 
+  console.log(`[cleanup] Running at ${new Date().toISOString()}, grace cutoff: ${graceCutoff.toISOString()}`)
+
   const expiredClients = await payload.find({
     collection: 'clients',
     where: {
@@ -33,9 +35,11 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
     overrideAccess: true,
   })
 
+  console.log(`[cleanup] Found ${expiredClients.docs.length} clients to delete`)
   result.processed = expiredClients.docs.length
 
   for (const client of expiredClients.docs) {
+    const clientLabel = `${client.id} (${(client as { name?: string }).name ?? 'brak nazwy'}, expiresAt: ${(client as { expiresAt?: string }).expiresAt ?? 'brak'})`
     try {
       // Count files before deletion (for reporting)
       const { totalDocs } = await payload.count({
@@ -45,6 +49,8 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
       })
       result.filesRemoved += totalDocs
 
+      console.log(`[cleanup] Deleting client ${clientLabel} with ${totalDocs} files`)
+
       // Delete client entirely - beforeDelete hook cascades to files first
       await payload.delete({
         collection: 'clients',
@@ -52,9 +58,12 @@ export async function cleanupExpiredClients(payload: Payload): Promise<CleanupRe
         overrideAccess: true,
       })
 
+      console.log(`[cleanup] Deleted client ${clientLabel}`)
       result.deleted++
     } catch (err) {
-      result.errors.push(`Client ${client.id}: ${err instanceof Error ? err.message : String(err)}`)
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`[cleanup] Failed to delete client ${clientLabel}: ${msg}`)
+      result.errors.push(`Client ${clientLabel}: ${msg}`)
     }
   }
 
