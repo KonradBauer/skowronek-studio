@@ -30,7 +30,6 @@ export default buildConfig({
     components: {
       graphics: {
         Logo: '/src/components/admin/AdminLogo#default',
-        Icon: '/src/components/admin/AdminLogo#default',
       },
     },
   },
