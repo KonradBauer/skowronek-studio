@@ -11,8 +11,11 @@ Klienci logują się, przeglądają zdjęcia/filmy, pobierają pliki. Konta wyga
 pnpm dev          # serwer dev
 pnpm build        # build produkcyjny (4GB heap)
 pnpm lint         # ESLint
-pnpm generate:types  # typy Payload
+pnpm generate:types  # typy Payload — uruchamiać ręcznie po zmianie schematu
 ```
+
+> **Uwaga:** `generate:types` jest zablokowany przez conflict `payload@3.79.1` vs `next@15.5.13`
+> (Payload 3.79.1 wymaga `next <15.5.0`). Naprawić przez dopasowanie wersji paczek.
 
 ## Konwencje
 

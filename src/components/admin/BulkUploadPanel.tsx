@@ -449,8 +449,14 @@ export const BulkUploadPanel = () => {
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: isDeletingAll ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              {isDeletingAll && (
+                <span style={{ ...styles.spinner, borderTopColor: 'white', borderColor: 'rgba(255,255,255,0.3)' }} />
+              )}
               {isDeletingAll ? 'Usuwanie...' : `Usuń wszystkie (${existingFiles.length})`}
             </button>
           </div>
@@ -508,9 +514,20 @@ export const BulkUploadPanel = () => {
                           type="button"
                           onClick={() => handleDeleteFile(file.id)}
                           disabled={deletingId === file.id}
-                          style={styles.deleteBtn}
+                          style={{
+                            ...styles.deleteBtn,
+                            cursor: deletingId === file.id ? 'not-allowed' : 'pointer',
+                            opacity: deletingId === file.id ? 0.6 : 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '28px',
+                            height: '24px',
+                          }}
                         >
-                          {deletingId === file.id ? '...' : 'x'}
+                          {deletingId === file.id
+                            ? <span style={{ ...styles.spinner, width: '10px', height: '10px', borderWidth: '1.5px', borderTopColor: '#ef4444', borderColor: '#fca5a5' }} />
+                            : '×'}
                         </button>
                       </div>
                     </div>
