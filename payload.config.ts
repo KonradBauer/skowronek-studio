@@ -27,6 +27,12 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      graphics: {
+        Logo: '/src/components/admin/AdminLogo#default',
+        Icon: '/src/components/admin/AdminLogo#default',
+      },
+    },
   },
   collections: [Users, Clients, ClientFiles, GalleryImages, Media, Services, ContactSubmissions, ZipCache],
   globals: [SiteSettings, HomePage, EmailTemplates],
