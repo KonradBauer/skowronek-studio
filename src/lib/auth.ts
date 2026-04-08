@@ -7,6 +7,8 @@ type AuthenticatedClient = {
   payload: Awaited<ReturnType<typeof getPayload>>
 }
 
+type PayloadUser = { id: number; collection?: string; expiresAt?: string }
+
 type AuthResult =
   | { success: true; data: AuthenticatedClient }
   | { success: false; response: NextResponse }
@@ -37,7 +39,7 @@ export async function authenticateClient(req: NextRequest): Promise<AuthResult> 
     return { success: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
   }
 
-  const clientUser = user as unknown as { id: number; collection?: string; expiresAt?: string }
+  const clientUser = user as unknown as PayloadUser
 
   if (clientUser.collection !== 'clients') {
     return { success: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
@@ -73,14 +75,14 @@ export async function authenticateAdmin(req: NextRequest): Promise<AuthResult> {
     headers: new Headers({ Authorization: `JWT ${token}` }),
   })
 
-  if (!user || (user as unknown as { collection?: string }).collection !== 'users') {
+  if (!user || (user as unknown as PayloadUser).collection !== 'users') {
     return { success: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
   }
 
   return {
     success: true,
     data: {
-      user: user as unknown as { id: number; collection: string; expiresAt?: string },
+      user: user as unknown as AuthenticatedClient['user'],
       payload,
     },
   }

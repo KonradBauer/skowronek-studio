@@ -10,6 +10,22 @@ import { VoucherSection } from '@/components/sections/VoucherSection'
 import { ReviewsSection } from '@/components/sections/ReviewsSection'
 import { ContactSection } from '@/components/sections/ContactSection'
 
+type HomePageData = {
+  hero?: { images?: unknown[]; title?: string; subtitle?: string; ctaText?: string; ctaLink?: string }
+  about?: { title?: string; heading?: string; paragraphs?: { text?: string }[]; image?: unknown }
+  portfolio?: { title?: string; subtitle?: string; images?: unknown[] }
+  services?: { title?: string; subtitle?: string }
+  voucher?: { label?: string; title?: string; description?: string; ctaText?: string; ctaLink?: string; image?: unknown }
+  contact?: { title?: string; heading?: string; subtitle?: string }
+}
+
+type SiteSettingsData = {
+  contact?: { email?: string; phone?: string; address?: string }
+  social?: { facebook?: string; instagram?: string; tiktok?: string }
+}
+
+type ServiceDoc = { title: string; description: string; image?: unknown }
+
 function getImageUrl(image: unknown): string {
   if (!image || typeof image === 'number') return ''
   if (typeof image === 'object' && image !== null && 'url' in image) {
@@ -30,12 +46,9 @@ function getImageSize(image: unknown, size: string): string {
 export default async function HomePage() {
   const payload = await getPayload({ config })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let homePage: any = {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let siteSettings: any = {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let servicesData: { docs: any[] } = { docs: [] }
+  let homePage: HomePageData = {}
+  let siteSettings: SiteSettingsData = {}
+  let servicesData: { docs: ServiceDoc[] } = { docs: [] }
 
   try {
     const results = await Promise.all([
@@ -45,7 +58,7 @@ export default async function HomePage() {
     ])
     homePage = results[0]
     siteSettings = results[1]
-    servicesData = results[2]
+    servicesData = results[2] as unknown as { docs: ServiceDoc[] }
   } catch {
     // Fallback to defaults when DB schema is not yet migrated
   }
@@ -66,8 +79,7 @@ export default async function HomePage() {
   const aboutData = {
     title: homePage.about?.title || 'O nas',
     heading: homePage.about?.heading || 'Chwile, ktore zostaja na zawsze',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    paragraphs: (homePage.about?.paragraphs || []).map((p: any) => p.text as string),
+    paragraphs: (homePage.about?.paragraphs || []).map((p) => p.text as string),
     imageUrl: getImageUrl(homePage.about?.image),
   }
 
@@ -85,8 +97,7 @@ export default async function HomePage() {
   }
 
   // Services data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const servicesItems = servicesData.docs.map((service: any) => ({
+  const servicesItems = servicesData.docs.map((service) => ({
     title: service.title as string,
     description: service.description as string,
     image: getImageSize(service.image, 'card'),

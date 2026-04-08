@@ -188,7 +188,6 @@ export const BulkUploadPanel = () => {
         )
         if (!res.ok) break
         const data = await res.json()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allPhotos.push(...(data.docs || []).map(mapFile))
         hasMore = data.hasNextPage || false
         page++
@@ -201,7 +200,6 @@ export const BulkUploadPanel = () => {
       )
       if (videoRes.ok) {
         const videoData = await videoRes.json()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allVideos.push(...(videoData.docs || []).map(mapFile))
       }
 

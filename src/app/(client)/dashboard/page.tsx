@@ -10,6 +10,9 @@ import { ExpirationBanner } from '@/components/client/ExpirationBanner'
 import { ClientDashboard } from '@/components/client/ClientDashboard'
 import { LogoutButton } from '@/components/client/LogoutButton'
 
+type ClientUserDoc = { id: string; name: string; expiresAt: string; sessionType?: string; collection?: string }
+type ClientFileDoc = { id: number | string; filename?: string; displayName?: string; mimeType?: string; filesize?: number; category?: string }
+
 const PHOTO_PAGE_SIZE = 30
 
 export default async function DashboardPage() {
@@ -33,13 +36,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const clientData = user as unknown as {
-    id: string
-    name: string
-    expiresAt: string
-    sessionType?: string
-    collection?: string
-  }
+  const clientData = user as unknown as ClientUserDoc
 
   if (clientData.collection !== 'clients') {
     redirect('/login')
@@ -68,8 +65,7 @@ export default async function DashboardPage() {
     sort: 'filename',
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapFile = (doc: any) => ({
+  const mapFile = (doc: ClientFileDoc) => ({
     id: String(doc.id),
     filename: String(doc.filename || ''),
     displayName: doc.displayName ? String(doc.displayName) : undefined,
@@ -93,8 +89,7 @@ export default async function DashboardPage() {
       limit: 2000,
       sort: 'filename',
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    totalPhotoSize = allPhotosForSize.docs.reduce((s: number, d: any) => s + Number(d.filesize || 0), 0)
+    totalPhotoSize = (allPhotosForSize.docs as unknown as ClientFileDoc[]).reduce((s: number, d) => s + Number(d.filesize || 0), 0)
   }
 
   return (

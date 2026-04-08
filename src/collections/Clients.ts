@@ -81,7 +81,7 @@ export const Clients: CollectionConfig = {
           pickerAppearance: 'dayOnly',
           displayFormat: 'dd.MM.yyyy',
         },
-        description: `Domyślnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto wygasa — jeśli data nie zostanie przedłużona, konto i pliki zostaną usunięte po ${EXPIRED_GRACE_DAYS} dniach.`,
+        description: `Domyślnie ${DEFAULT_EXPIRY_DAYS} dni od utworzenia. Po tej dacie konto wygasa - jeśli data nie zostanie przedłużona, konto i pliki zostaną usunięte po ${EXPIRED_GRACE_DAYS} dniach.`,
       },
     },
   ],

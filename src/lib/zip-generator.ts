@@ -3,7 +3,11 @@ import { createReadStream, createWriteStream } from 'fs'
 import { mkdir, stat, unlink, access } from 'fs/promises'
 import archiver from 'archiver'
 import { getPayload } from 'payload'
+import type { Where, Payload } from 'payload'
 import config from '@payload-config'
+
+type ClientFileDoc = { id: number | string; filename?: string; displayName?: string }
+type ZipCacheDoc = { id: number | string; zipFilename?: string }
 
 const ZIPS_DIR = path.resolve('uploads', 'zips')
 
@@ -55,8 +59,7 @@ export async function generateClientZip(
     }
 
     // Fetch files
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const whereClause: any = {
+    const whereClause: Where = {
       client: { equals: Number(clientId) },
     }
     if (category !== 'all') {
@@ -90,8 +93,7 @@ export async function generateClientZip(
 
     archive.pipe(output)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const doc of filesResult.docs as any[]) {
+    for (const doc of filesResult.docs as unknown as ClientFileDoc[]) {
       const filename = String(doc.filename || '')
       if (!filename) continue
 
@@ -112,8 +114,7 @@ export async function generateClientZip(
     const zipStat = await stat(zipPath)
 
     // Delete old ZIP file if exists
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const oldFilename = (existing.docs[0] as any)?.zipFilename
+    const oldFilename = (existing.docs[0] as unknown as ZipCacheDoc)?.zipFilename
     if (oldFilename && oldFilename !== zipFilename) {
       try {
         await unlink(path.join(ZIPS_DIR, oldFilename))
@@ -145,8 +146,7 @@ export async function generateClientZip(
  * Invalidate cached ZIPs for a client when files change.
  */
 export async function invalidateZipCache(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any,
+  payload: Payload,
   clientId: number | string,
   category: string,
 ): Promise<void> {
@@ -165,8 +165,7 @@ export async function invalidateZipCache(
         overrideAccess: true,
       })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const doc of cached.docs as any[]) {
+      for (const doc of cached.docs as unknown as ZipCacheDoc[]) {
         // Delete physical ZIP file
         if (doc.zipFilename) {
           try {

@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
