@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateClient } from '@/lib/auth'
-import { verifyFileOwnership } from '@/lib/file-utils'
+import { verifyFileOwnership, nodeStreamToWebStream } from '@/lib/file-utils'
 import { getS3Client, PRESIGNED_URL_EXPIRY } from '@/lib/s3'
 import path from 'path'
 import { access, stat } from 'fs/promises'
 import { createReadStream } from 'fs'
-import { Readable } from 'stream'
 
 export async function GET(
   req: NextRequest,
@@ -62,9 +61,8 @@ export async function GET(
 
   const fileStat = await stat(filePath)
   const nodeStream = createReadStream(filePath)
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
-  return new NextResponse(webStream, {
+  return new NextResponse(nodeStreamToWebStream(nodeStream), {
     headers: {
       'Content-Type': mimeType,
       'Content-Disposition': `attachment; filename="${filename}"`,

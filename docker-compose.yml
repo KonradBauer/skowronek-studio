@@ -10,14 +10,21 @@ services:
       - "443:443"
       - "443:443/udp"   # HTTP/3
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - web
     depends_on:
       - site
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ──────────────────────────────────────
-  # Skowronek Studio - skowronekstudio.pl
+  # PostgreSQL - tylko sieć wewnętrzna
   # ──────────────────────────────────────
   db:
     image: postgres:16-alpine
@@ -28,12 +35,23 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - ${STORAGE_PATH:-/mnt/storage}/db:/var/lib/postgresql/data
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U payload -d skowronekstudio"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # ──────────────────────────────────────
+  # Skowronek Studio - skowronekstudio.pl
+  # ──────────────────────────────────────
   site:
     build:
       context: .
@@ -50,16 +68,30 @@ services:
       CRON_SECRET: ${CRON_SECRET}
       NEXT_PUBLIC_SITE_URL: https://skowronekstudio.pl
       NEXT_PUBLIC_SERVER_URL: https://skowronekstudio.pl
-      # SMTP
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      SMTP_FROM: ${SMTP_FROM}
+      # Resend (mailing)
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-studio@skowronekstudio.pl}
       # Google Reviews (opcjonalnie)
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
     volumes:
       - ${STORAGE_PATH:-/mnt/storage}/uploads:/app/uploads
+    networks:
+      - internal
+      - web
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+networks:
+  # Sieć publiczna: caddy ↔ site
+  web:
+    driver: bridge
+  # Sieć wewnętrzna: site ↔ db (brak dostępu z hosta)
+  internal:
+    driver: bridge
+    internal: true
 
 volumes:
   caddy_data:

@@ -5,7 +5,7 @@ import { getS3Client, PRESIGNED_URL_EXPIRY } from '@/lib/s3'
 import path from 'path'
 import { stat, readFile, writeFile, mkdir, readdir, unlink } from 'fs/promises'
 import { createReadStream } from 'fs'
-import { Readable } from 'stream'
+import { nodeStreamToWebStream } from '@/lib/file-utils'
 import sharp from 'sharp'
 
 const CACHE_DIR = path.resolve('uploads', 'client-files', '.cache')
@@ -157,9 +157,8 @@ export async function GET(
     }
 
     const nodeStream = createReadStream(fullPath)
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
-    return new NextResponse(webStream, {
+    return new NextResponse(nodeStreamToWebStream(nodeStream), {
       headers: {
         'Content-Type': mimeType,
         'Content-Length': String(fileStat.size),
@@ -186,9 +185,8 @@ export async function GET(
 
     const { start, end } = range
     const nodeStream = createReadStream(fullPath, { start, end })
-    const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
-    return new NextResponse(webStream, {
+    return new NextResponse(nodeStreamToWebStream(nodeStream), {
       status: 206,
       headers: {
         'Content-Type': mimeType,
@@ -202,9 +200,8 @@ export async function GET(
 
   // Stream video instead of buffering entire file into memory
   const nodeStream = createReadStream(fullPath)
-  const webStream = Readable.toWeb(nodeStream) as ReadableStream
 
-  return new NextResponse(webStream, {
+  return new NextResponse(nodeStreamToWebStream(nodeStream), {
     headers: {
       'Content-Type': mimeType,
       'Content-Length': String(fileSize),
