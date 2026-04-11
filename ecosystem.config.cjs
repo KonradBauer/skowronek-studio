@@ -8,7 +8,7 @@ module.exports = {
       name: 'skowronekstudio',
       script: 'node_modules/.bin/next',
       args: 'start',
-      cwd: '/var/www/skowronekstudio',
+      cwd: '/var/www/skowronek-studio',
       instances: 1,
       // NODE_ENV=development — Payload pushuje schemat bazy przy starcie
       // Zmienić na production po wygenerowaniu plików migracji
