@@ -1,30 +1,6 @@
 services:
   # ──────────────────────────────────────
-  # Caddy - reverse proxy + auto SSL
-  # ──────────────────────────────────────
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"   # HTTP/3
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - web
-    depends_on:
-      - site
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ──────────────────────────────────────
-  # PostgreSQL - tylko sieć wewnętrzna
+  # PostgreSQL — dostępne na localhost:5432 dla PM2 app
   # ──────────────────────────────────────
   db:
     image: postgres:16-alpine
@@ -33,10 +9,10 @@ services:
       POSTGRES_DB: skowronekstudio
       POSTGRES_USER: payload
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - ${STORAGE_PATH:-/mnt/storage}/db:/var/lib/postgresql/data
-    networks:
-      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U payload -d skowronekstudio"]
       interval: 10s
@@ -48,51 +24,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # ──────────────────────────────────────
-  # Skowronek Studio - skowronekstudio.pl
-  # ──────────────────────────────────────
-  site:
-    build:
-      context: .
-      args:
-        NEXT_PUBLIC_SITE_URL: https://skowronekstudio.pl
-        NEXT_PUBLIC_SERVER_URL: https://skowronekstudio.pl
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
-      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
-      CRON_SECRET: ${CRON_SECRET}
-      NEXT_PUBLIC_SITE_URL: https://skowronekstudio.pl
-      NEXT_PUBLIC_SERVER_URL: https://skowronekstudio.pl
-      # Resend (mailing)
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-studio@skowronekstudio.pl}
-      # Google Reviews (opcjonalnie)
-      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
-    volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/uploads:/app/uploads
-    networks:
-      - internal
-      - web
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "20m"
-        max-file: "5"
-
-networks:
-  # Sieć publiczna: caddy ↔ site
-  web:
-    driver: bridge
-  # Sieć wewnętrzna: site ↔ db (brak dostępu z hosta)
-  internal:
-    driver: bridge
-    internal: true
-
-volumes:
-  caddy_data:
-  caddy_config:
