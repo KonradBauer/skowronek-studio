@@ -12,7 +12,7 @@ set -euo pipefail
 VPS_HOST="${VPS_HOST:-}"
 VPS_USER="${VPS_USER:-root}"
 VPS_PORT="${VPS_PORT:-22}"
-REMOTE_DIR="/opt/skowronekstudio"
+REMOTE_DIR="/var/www/skowronekstudio"
 # ─────────────────────────────────────────────────────────────
 
 [[ -z "$VPS_HOST" ]] && { echo "Ustaw: export VPS_HOST=TWOJ_IP"; exit 1; }
