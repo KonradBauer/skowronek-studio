@@ -24,6 +24,21 @@ services:
         max-file: "3"
 
   # ──────────────────────────────────────
+  # Schema migration (runs once before app)
+  # ──────────────────────────────────────
+  migrate:
+    build:
+      context: .
+      target: migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+    restart: "no"
+
+  # ──────────────────────────────────────
   # Next.js + Payload CMS
   # ──────────────────────────────────────
   app:
@@ -36,16 +51,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
-      # DATABASE_URI nadpisuje wartość z .env — w Docker baza to serwis "db", nie localhost
       DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: "0.0.0.0"
-      # db.push=true — Payload automatycznie tworzy/aktualizuje schemat przy starcie
-      PAYLOAD_DB_PUSH: "true"
+      PAYLOAD_DB_PUSH: "false"
     volumes:
       - uploads:/app/uploads
     logging:

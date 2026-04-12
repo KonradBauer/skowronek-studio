@@ -28,6 +28,14 @@ ENV DATABASE_URI=postgresql://fake:fake@localhost:5432/fake
 
 RUN pnpm build
 
+# ------- Migrate (schema push) -------
+FROM base AS migrate
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+CMD ["pnpm", "exec", "tsx", "migrate.ts"]
+
 # ------- Runner -------
 FROM base AS runner
 WORKDIR /app
