@@ -5,8 +5,6 @@ services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       POSTGRES_DB: skowronekstudio
       POSTGRES_USER: payload
@@ -15,43 +13,10 @@ services:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U payload -d skowronekstudio"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # ──────────────────────────────────────
-  # Payload migrate — tworzy schemat bazy przed startem apki
-  # ──────────────────────────────────────
-  migrate:
-    build:
-      context: .
-      target: migrator
-    working_dir: /app
-    # Jeśli nie ma plików migracji — utwórz je (pierwsze uruchomienie).
-    # Następnie uruchom migrate (idempotentne — pomija już zastosowane migracje).
-    command: >
-      sh -c "
-      ls src/migrations/*.ts >/dev/null 2>&1 ||
-      NODE_OPTIONS='-r tsconfig-paths/register' ./node_modules/.bin/payload migrate:create &&
-      NODE_OPTIONS='-r tsconfig-paths/register' ./node_modules/.bin/payload migrate
-      "
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file: .env
-    environment:
-      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
-      NODE_ENV: production
-    volumes:
-      # Bind mount — wygenerowane pliki migracji trafiają na hosta (można je commitować)
-      - ./src/migrations:/app/src/migrations
-    restart: on-failure
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     logging:
       driver: "json-file"
       options:
@@ -71,18 +36,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     env_file:
       - .env
     environment:
       # DATABASE_URI nadpisuje wartość z .env — w Docker baza to serwis "db", nie localhost
       DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
-      # NODE_ENV=development — Payload auto-pushuje schemat bazy przy starcie (db.push)
-      # Zmienić na production dopiero po wygenerowaniu plików migracji
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       HOSTNAME: "0.0.0.0"
+      # db.push=true — Payload automatycznie tworzy/aktualizuje schemat przy starcie
+      PAYLOAD_DB_PUSH: "true"
     volumes:
       - uploads:/app/uploads
     logging:

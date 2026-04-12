@@ -9,12 +9,6 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# ------- Migrator (bez next build — tylko do payload migrate) -------
-FROM base AS migrator
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
 # ------- Builder -------
 FROM base AS builder
 WORKDIR /app
@@ -27,6 +21,10 @@ ARG NEXT_PUBLIC_SERVER_URL
 
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
+
+# Payload needs these at build time for config initialization (not actual DB connection)
+ENV PAYLOAD_SECRET=build-time-secret-not-used-at-runtime
+ENV DATABASE_URI=postgresql://fake:fake@localhost:5432/fake
 
 RUN pnpm build
 
