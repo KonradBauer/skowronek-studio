@@ -29,13 +29,15 @@ services:
   migrate:
     build:
       context: .
-      target: migrate
+      target: builder
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
       PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      NODE_ENV: production
+    command: ["pnpm", "exec", "tsx", "migrate.ts"]
     restart: "no"
 
   # ──────────────────────────────────────
