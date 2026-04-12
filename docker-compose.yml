@@ -43,7 +43,7 @@ services:
       PORT: 3000
       HOSTNAME: "0.0.0.0"
       # db = nazwa serwisu Docker (internal DNS), nie localhost
-      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      DATABASE_URI: ${DATABASE_URI}
       PAYLOAD_SECRET: ${PAYLOAD_SECRET}
       CRON_SECRET: ${CRON_SECRET}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
