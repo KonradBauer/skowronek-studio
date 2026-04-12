@@ -33,6 +33,7 @@ Thumbs.db
 # Payload
 media/
 uploads/
+data/
 
 # Misc
 *.tsbuildinfo

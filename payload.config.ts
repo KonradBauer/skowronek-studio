@@ -1,7 +1,7 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { buildConfig } from 'payload'
-import { postgresAdapter } from '@payloadcms/db-postgres'
+import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
 import sharp from 'sharp'
@@ -41,13 +41,10 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'src/types/payload-types.ts'),
   },
   sharp,
-  db: postgresAdapter({
-    pool: {
-      connectionString: process.env.DATABASE_URI || '',
+  db: sqliteAdapter({
+    client: {
+      url: process.env.DATABASE_URI || 'file:./data/payload.db',
     },
-    // PAYLOAD_DB_PUSH nie jest inlinowane przez Next.js podczas buildu (w przeciwieństwie do NODE_ENV).
-    // Domyślnie true — Payload pushuje schemat przy starcie. Ustaw PAYLOAD_DB_PUSH=false
-    // gdy przejdziesz na workflow z plikami migracji (pnpm payload:migrate).
     push: process.env.PAYLOAD_DB_PUSH !== 'false',
   }),
   plugins: [
