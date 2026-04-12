@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'skowronek-studio',
-      script: 'node_modules/.bin/next',
+      script: 'node_modules/next/dist/bin/next',
       args: 'start -p 1000',
       cwd: '/var/www/skowronek-studio',
       env: {
