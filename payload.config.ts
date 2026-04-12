@@ -45,6 +45,10 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    // PAYLOAD_DB_PUSH nie jest inlinowane przez Next.js podczas buildu (w przeciwieństwie do NODE_ENV).
+    // Domyślnie true — Payload pushuje schemat przy starcie. Ustaw PAYLOAD_DB_PUSH=false
+    // gdy przejdziesz na workflow z plikami migracji (pnpm payload:migrate).
+    push: process.env.PAYLOAD_DB_PUSH !== 'false',
   }),
   plugins: [
     ...(process.env.S3_BUCKET
