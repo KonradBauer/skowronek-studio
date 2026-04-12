@@ -43,7 +43,7 @@ export default buildConfig({
   sharp,
   db: sqliteAdapter({
     client: {
-      url: process.env.DATABASE_URI || 'file:./data/payload.db',
+      url: process.env.DATABASE_URI || 'file:./payload.db',
     },
     push: process.env.PAYLOAD_DB_PUSH !== 'false',
   }),
