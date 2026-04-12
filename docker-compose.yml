@@ -26,6 +26,39 @@ services:
         max-file: "3"
 
   # ──────────────────────────────────────
+  # Payload migrate — tworzy schemat bazy przed startem apki
+  # ──────────────────────────────────────
+  migrate:
+    build:
+      context: .
+      target: migrator
+    working_dir: /app
+    # Jeśli nie ma plików migracji — utwórz je (pierwsze uruchomienie).
+    # Następnie uruchom migrate (idempotentne — pomija już zastosowane migracje).
+    command: >
+      sh -c "
+      ls src/migrations/*.ts >/dev/null 2>&1 ||
+      NODE_OPTIONS='-r tsconfig-paths/register' ./node_modules/.bin/payload migrate:create &&
+      NODE_OPTIONS='-r tsconfig-paths/register' ./node_modules/.bin/payload migrate
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      NODE_ENV: production
+    volumes:
+      # Bind mount — wygenerowane pliki migracji trafiają na hosta (można je commitować)
+      - ./src/migrations:/app/src/migrations
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ──────────────────────────────────────
   # Next.js + Payload CMS
   # ──────────────────────────────────────
   app:
@@ -38,6 +71,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:

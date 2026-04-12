@@ -9,6 +9,12 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# ------- Migrator (bez next build — tylko do payload migrate) -------
+FROM base AS migrator
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
 # ------- Builder -------
 FROM base AS builder
 WORKDIR /app
