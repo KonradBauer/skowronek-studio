@@ -41,8 +41,10 @@ services:
     env_file:
       - .env
     environment:
-      # NODE_ENV=development — Payload auto-pushuje schemat bazy przy starcie
-      # Zmienić na production po wygenerowaniu plików migracji
+      # DATABASE_URI nadpisuje wartość z .env — w Docker baza to serwis "db", nie localhost
+      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      # NODE_ENV=development — Payload auto-pushuje schemat bazy przy starcie (db.push)
+      # Zmienić na production dopiero po wygenerowaniu plików migracji
       NODE_ENV: development
       PORT: 3000
       HOSTNAME: "0.0.0.0"

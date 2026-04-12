@@ -40,7 +40,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Uploads directory structure (local storage)
-RUN mkdir -p /app/uploads/client-files /app/uploads/gallery /app/uploads/tmp /app/uploads/zips && \
+RUN mkdir -p /app/uploads/client-files /app/uploads/gallery /app/uploads/media /app/uploads/tmp /app/uploads/zips && \
     chown -R nextjs:nodejs /app/uploads
 
 USER nextjs
