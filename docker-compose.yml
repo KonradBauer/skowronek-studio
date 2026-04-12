@@ -1,6 +1,6 @@
 services:
   # ──────────────────────────────────────
-  # PostgreSQL — dostępne na localhost:5432 dla PM2 app
+  # PostgreSQL
   # ──────────────────────────────────────
   db:
     image: postgres:16-alpine
@@ -9,10 +9,8 @@ services:
       POSTGRES_DB: skowronekstudio
       POSTGRES_USER: payload
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
-      - ${STORAGE_PATH:-/mnt/storage}/db:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U payload -d skowronekstudio"]
       interval: 10s
@@ -24,3 +22,69 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  # ──────────────────────────────────────
+  # Next.js + Payload CMS
+  # ──────────────────────────────────────
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # NODE_ENV=development — Payload auto-pushuje schemat bazy przy starcie
+      # Zmienić na production po wygenerowaniu plików migracji
+      NODE_ENV: development
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      # db = nazwa serwisu Docker (internal DNS), nie localhost
+      DATABASE_URI: postgresql://payload:${DB_PASSWORD}@db:5432/skowronekstudio
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      CRON_SECRET: ${CRON_SECRET}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL}
+      # S3 / Cloudflare R2
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      S3_REGION: ${S3_REGION:-auto}
+      # Mailing
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      # Google Reviews
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+    volumes:
+      - uploads:/app/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ──────────────────────────────────────
+  # Nginx — reverse proxy
+  # ──────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  db_data:
+  uploads:
