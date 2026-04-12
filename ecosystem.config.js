@@ -12,7 +12,7 @@ module.exports = {
       max_memory_restart: '3G',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 1000,
         HOSTNAME: '0.0.0.0',
         NODE_OPTIONS: '--max-old-space-size=4096',
       },
