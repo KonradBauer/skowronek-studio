@@ -96,7 +96,7 @@ export function Footer({ contact, social }: FooterProps) {
                 rel="noopener noreferrer"
                 className="transition-colors hover:text-primary"
               >
-                kbauer.pl
+                Powered by kbauer.pl
               </a>
             </div>
           </div>

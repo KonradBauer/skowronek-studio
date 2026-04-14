@@ -68,7 +68,7 @@ export function HeroSection({ data }: { data: HeroData }) {
         </motion.p>
 
         <motion.h1
-          className="mb-6 text-5xl font-light tracking-[0.15em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-7xl lg:text-8xl"
+          className="mb-6 font-sans text-5xl font-light tracking-[0.15em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-7xl lg:text-8xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
