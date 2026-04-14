@@ -14,8 +14,8 @@
   --color-input-border: #958D84;
 
   /* Font stack - tymczasowy, docelowy od klienta */
-  --font-sans: "Jost", "Segoe UI", Arial, sans-serif;
-  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Montserrat", "Segoe UI", Arial, sans-serif;
+  --font-heading: var(--font-sans);
 
   /* Spacing scale */
   --spacing-section: 6rem;

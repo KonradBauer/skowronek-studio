@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Cormorant_Garamond, Jost } from 'next/font/google'
+import { Montserrat } from 'next/font/google'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { Header } from '@/components/layout/Header'
@@ -11,15 +11,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { seoConfig, buildOgImageUrl, robotsDirectives } from '@/lib/seo'
 import '@/styles/globals.css'
 
-// Fonts — confirm final choices with client before launch
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['300', '400', '500'],
-  variable: '--font-heading',
-  display: 'swap',
-})
-
-const jost = Jost({
+const montserrat = Montserrat({
   subsets: ['latin', 'latin-ext'],
   weight: ['300', '400', '500'],
   variable: '--font-sans',
@@ -71,7 +63,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const { contact, social } = siteSettings
 
   return (
-    <html lang="pl" className={`${cormorant.variable} ${jost.variable}`}>
+    <html lang="pl" className={montserrat.variable}>
       <body className="frontend antialiased">
         <JsonLd contact={contact} social={social} />
         <Header social={social} />

@@ -15,7 +15,7 @@ export default function PolitykaPrywatnosci() {
     <div className="min-h-screen bg-white pt-32 pb-20">
       <Container>
         <div className="mx-auto max-w-3xl">
-          <h1 className="mb-2 text-3xl font-sans font-light tracking-wide text-dark">
+          <h1 className="mb-2 text-3xl font-light tracking-wide text-dark">
             Polityka prywatności
           </h1>
           <p className="mb-12 text-sm text-body-muted">Ostatnia aktualizacja: kwiecień 2026</p>
@@ -23,7 +23,7 @@ export default function PolitykaPrywatnosci() {
           <div className="space-y-10 text-body leading-relaxed">
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 1. Administrator danych
               </h2>
               <p>
@@ -34,7 +34,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 2. Jakie dane zbieramy
               </h2>
               <ul className="list-disc space-y-2 pl-5">
@@ -51,7 +51,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 3. Cel i podstawa przetwarzania
               </h2>
               <ul className="list-disc space-y-2 pl-5">
@@ -68,7 +68,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 4. Okres przechowywania
               </h2>
               <ul className="list-disc space-y-2 pl-5">
@@ -78,7 +78,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 5. Twoje prawa
               </h2>
               <p className="mb-3">Masz prawo do:</p>
@@ -100,7 +100,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 6. Udostępnianie danych
               </h2>
               <p>
@@ -112,7 +112,7 @@ export default function PolitykaPrywatnosci() {
             </section>
 
             <section>
-              <h2 className="mb-3 font-sans text-lg font-medium uppercase tracking-[0.1em] text-dark">
+              <h2 className="mb-3 text-lg font-medium uppercase tracking-[0.1em] text-dark">
                 7. Kontakt
               </h2>
               <p>
