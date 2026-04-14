@@ -14,8 +14,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://skowronekstudio.pl
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
-    template: '%s | Skowronek Studio',
+    default: 'Foto Studio - Fotografia ślubna, portretowa i rodzinna',
+    template: '%s | Foto Studio',
   },
   description:
     'Profesjonalne studio fotograficzne specjalizujące się w fotografii ślubnej, portretowej i rodzinnej. Uchwycamy chwile, które zostają na zawsze. Częstochowa i okolice.',
@@ -28,17 +28,17 @@ export const metadata: Metadata = {
     'fotografia rodzinna',
     'sesja zdjęciowa',
     'film ślubny',
-    'Skowronek Studio',
+    'Foto Studio',
     'fotograf wesele',
   ],
-  authors: [{ name: 'Skowronek Studio' }],
-  creator: 'Skowronek Studio',
+  authors: [{ name: 'Foto Studio' }],
+  creator: 'Foto Studio',
   openGraph: {
-    title: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
+    title: 'Foto Studio - Fotografia ślubna, portretowa i rodzinna',
     description:
       'Profesjonalne studio fotograficzne. Fotografia ślubna, portretowa, rodzinna i filmowanie. Częstochowa i okolice.',
     url: SITE_URL,
-    siteName: 'Skowronek Studio',
+    siteName: 'Foto Studio',
     locale: 'pl_PL',
     type: 'website',
     images: [
@@ -46,13 +46,13 @@ export const metadata: Metadata = {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Skowronek Studio - Fotografia z pasją',
+        alt: 'Foto Studio - Fotografia z pasją',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
+    title: 'Foto Studio - Fotografia ślubna, portretowa i rodzinna',
     description:
       'Profesjonalne studio fotograficzne. Fotografia slubna, portretowa, rodzinna i filmowanie.',
     images: ['/og-image.jpg'],

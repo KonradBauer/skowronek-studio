@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 import { useNavigationStore } from '@/stores/navigationStore'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
@@ -39,18 +38,15 @@ export function Header({ social }: HeaderProps) {
         <div className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
           {/* Logo */}
           <Link href="/" className="block py-3">
-            <Image
-              src="/logo.png"
-              alt="Skowronek Studio"
-              width={820}
-              height={180}
-              className={`h-24 w-auto object-contain transition-all duration-[var(--duration-slow)] ${
+            <span
+              className={`text-xl font-light uppercase tracking-[0.25em] transition-all duration-[var(--duration-slow)] ${
                 isScrolled || isMenuOpen
-                  ? ''
-                  : 'brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]'
+                  ? 'text-dark'
+                  : 'text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]'
               }`}
-              priority
-            />
+            >
+              Foto Studio
+            </span>
           </Link>
 
           {/* Desktop nav */}

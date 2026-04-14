@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { SocialLinks } from './SocialLinks'
 
@@ -30,14 +29,10 @@ export function Footer({ contact, social }: FooterProps) {
         <div className="grid gap-10 py-14 md:grid-cols-3 lg:grid-cols-4">
           {/* Logo + opis */}
           <div className="lg:col-span-1">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="Skowronek Studio"
-                width={180}
-                height={66}
-                className="h-20 w-auto object-contain"
-              />
+            <Link href="/" className="block">
+              <span className="text-lg font-light uppercase tracking-[0.25em] text-dark">
+                Foto Studio
+              </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-body-muted">
               Profesjonalne studio fotograficzne. Uchwycamy chwile, ktore zostaja na zawsze.
@@ -110,18 +105,7 @@ export function Footer({ contact, social }: FooterProps) {
         <div className="border-t border-warm-gray py-6">
           <div className="flex flex-col items-center gap-1">
             <p className="text-center text-xs text-body-muted">
-              &copy; {currentYear} Skowronek Studio. Wszelkie prawa zastrzezone.
-            </p>
-            <p className="text-center text-xs text-body-muted/60">
-              Powered by{' '}
-              <a
-                href="https://kbauer.pl"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition-colors hover:text-primary"
-              >
-                kbauer.pl
-              </a>
+              &copy; {currentYear} Foto Studio. Wszelkie prawa zastrzezone.
             </p>
           </div>
         </div>

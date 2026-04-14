@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ExpirationBanner } from '@/components/client/ExpirationBanner'
@@ -97,7 +96,9 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <Link href="/">
-          <Image src="/logo.png" alt="Skowronek Studio" width={180} height={66} className="h-12 w-auto object-contain" />
+          <span className="text-lg font-light uppercase tracking-[0.25em] text-dark">
+            Foto Studio
+          </span>
         </Link>
         <LogoutButton />
       </div>

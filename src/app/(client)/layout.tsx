@@ -3,7 +3,7 @@ import { CookieConsent } from '@/components/ui/CookieConsent'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'Panel klienta - Skowronek Studio',
+  title: 'Panel klienta - Foto Studio',
   robots: { index: false, follow: false },
 }
 

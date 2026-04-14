@@ -13,7 +13,7 @@ export function JsonLd({ contact, social }: JsonLdProps) {
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'PhotographyBusiness',
-    name: 'Skowronek Studio',
+    name: 'Foto Studio',
     description:
       'Profesjonalne studio fotograficzne specjalizujące się w fotografii ślubnej, portretowej i rodzinnej.',
     url: SITE_URL,
@@ -94,13 +94,13 @@ export function JsonLd({ contact, social }: JsonLdProps) {
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Skowronek Studio',
+    name: 'Foto Studio',
     url: SITE_URL,
     description:
       'Profesjonalne studio fotograficzne - fotografia ślubna, portretowa i rodzinna.',
     publisher: {
       '@type': 'Organization',
-      name: 'Skowronek Studio',
+      name: 'Foto Studio',
       logo: {
         '@type': 'ImageObject',
         url: `${SITE_URL}/logo.png`,

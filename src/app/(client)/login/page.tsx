@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 
 export default function LoginPage() {
@@ -50,7 +49,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="mb-12 flex justify-center">
-          <Image src="/logo.png" alt="Skowronek Studio" width={200} height={74} className="h-16 w-auto object-contain" />
+          <span className="text-2xl font-light uppercase tracking-[0.25em] text-dark">
+            Foto Studio
+          </span>
         </Link>
 
         <div className="bg-white p-8 shadow-sm">
