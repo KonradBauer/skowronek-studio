@@ -2,15 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { SocialLinks } from './SocialLinks'
-
-const NAV_LINKS = [
-  { label: 'O nas', href: '#about' },
-  { label: 'Portfolio', href: '#portfolio' },
-  { label: 'Oferta', href: '#services' },
-  { label: 'Voucher', href: '#voucher' },
-  { label: 'Opinie', href: '#reviews' },
-  { label: 'Kontakt', href: '#contact' },
-]
+import { FooterNav } from './FooterNav'
 
 interface FooterProps {
   contact?: { email?: string; phone?: string; address?: string }
@@ -49,26 +41,7 @@ export function Footer({ contact, social }: FooterProps) {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Nawigacja
             </h3>
-            <ul className="space-y-0">
-              {NAV_LINKS.map(({ label, href }) => (
-                <li key={href}>
-                  <a
-                    href={href}
-                    className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
-                  >
-                    {label}
-                  </a>
-                </li>
-              ))}
-              <li>
-                <Link
-                  href="/login"
-                  className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
-                >
-                  Panel klienta
-                </Link>
-              </li>
-            </ul>
+            <FooterNav />
           </nav>
 
           {/* Kontakt */}
