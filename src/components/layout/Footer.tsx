@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { SocialLinks } from './SocialLinks'
 import { FooterNav } from './FooterNav'
@@ -22,14 +21,8 @@ export function Footer({ contact, social }: FooterProps) {
         <div className="grid gap-10 py-14 md:grid-cols-3 lg:grid-cols-4">
           {/* Logo + opis */}
           <div className="lg:col-span-1">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="Skowronek Studio"
-                width={180}
-                height={66}
-                className="h-20 w-auto object-contain"
-              />
+            <Link href="/" className="text-xl font-light tracking-[0.2em] uppercase text-dark">
+              Foto Studio
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-body-muted">
               Profesjonalne studio fotograficzne. Uchwycamy chwile, ktore zostaja na zawsze.
@@ -83,7 +76,7 @@ export function Footer({ contact, social }: FooterProps) {
         <div className="border-t border-warm-gray py-6">
           <div className="flex flex-col items-center gap-2">
             <p className="text-center text-xs text-body-muted">
-              &copy; {currentYear} Skowronek Studio. Wszelkie prawa zastrzezone.
+              &copy; {currentYear} Foto Studio. Wszelkie prawa zastrzezone.
             </p>
             <div className="flex items-center gap-4 text-xs text-body-muted/60">
               <Link href="/polityka-prywatnosci" className="transition-colors hover:text-primary">

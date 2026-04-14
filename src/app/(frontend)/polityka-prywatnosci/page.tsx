@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/Container'
 export const metadata: Metadata = {
   ...buildMetadata({
     title: 'Polityka prywatności',
-    description: 'Informacje o przetwarzaniu danych osobowych przez Skowronek Studio.',
+    description: 'Informacje o przetwarzaniu danych osobowych przez Foto Studio.',
     noindex: true,
   }),
 }
@@ -27,7 +27,7 @@ export default function PolitykaPrywatnosci() {
                 1. Administrator danych
               </h2>
               <p>
-                Administratorem Twoich danych osobowych jest Skowronek Studio,
+                Administratorem Twoich danych osobowych jest Foto Studio,
                 ul. [adres], [kod pocztowy] Częstochowa,
                 e-mail: <a href="mailto:studio@skowronekstudio.pl" className="text-primary hover:underline">studio@skowronekstudio.pl</a>.
               </p>
