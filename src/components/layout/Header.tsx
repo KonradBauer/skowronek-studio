@@ -35,7 +35,7 @@ export function Header({ social }: HeaderProps) {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-dark/50 to-transparent" />
         )}
 
-        <div className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between px-6">
+        <div className="relative mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 pt-4">
           {/* Logo */}
           <Link href="/" className="block py-3">
             <span
