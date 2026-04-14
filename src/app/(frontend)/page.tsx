@@ -92,7 +92,11 @@ export default async function HomePage() {
     .map((item: unknown) => getImageUrl(item))
     .filter(Boolean)
   const heroData = {
-    images: heroImages.length > 0 ? heroImages : ['/images/hero-1.jpg', '/images/hero-2.jpg', '/images/hero-3.jpg', '/images/hero-4.jpg'],
+    images: heroImages.length > 0 ? heroImages : [
+      'https://picsum.photos/seed/hero-a/1920/1080',
+      'https://picsum.photos/seed/hero-b/1920/1080',
+      'https://picsum.photos/seed/hero-c/1920/1080',
+    ],
     title: homePage.hero?.title || 'Foto Studio',
     subtitle: homePage.hero?.subtitle || 'Fotografia z pasja',
     ctaText: homePage.hero?.ctaText || 'Zobacz portfolio',

@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  /* Cieple neutralne - elegancja, naturalna fotograficzna estetyka */
-  --color-primary: #826D4C;
-  --color-primary-dark: #6B5740;
-  --color-cream: #FAF7F2;
-  --color-warm-gray: #E8E2DA;
-  --color-dark: #2C2420;
-  --color-body: #5C5147;
-  --color-body-muted: #6F6A63;
+  /* Chlodna, redakcyjna paleta - gleboki granat, stal, zloto */
+  --color-primary: #2E4057;
+  --color-primary-dark: #1E2D3D;
+  --color-cream: #F3F5F8;
+  --color-warm-gray: #D8DFE8;
+  --color-dark: #1A2535;
+  --color-body: #4A5C6A;
+  --color-body-muted: #7A8C9A;
   --color-white: #FFFFFF;
-  --color-accent: #C4A882;
-  --color-input-border: #958D84;
+  --color-accent: #E8A84B;
+  --color-input-border: #9DB0BC;
 
-  /* Font stack - tymczasowy, docelowy od klienta */
-  --font-sans: "Montserrat", "Segoe UI", Arial, sans-serif;
-  --font-heading: var(--font-sans);
+  /* Font stack */
+  --font-sans: "Inter", "Segoe UI", Arial, sans-serif;
+  --font-heading: "Playfair Display", Georgia, serif;
 
   /* Spacing scale */
   --spacing-section: 6rem;
@@ -55,8 +55,8 @@ html:has(.frontend) {
 .frontend h6 {
   font-family: var(--font-heading);
   color: var(--color-dark);
-  font-weight: 300;
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 /* Selection color */

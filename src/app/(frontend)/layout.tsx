@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Montserrat } from 'next/font/google'
+import { Inter, Playfair_Display } from 'next/font/google'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { Header } from '@/components/layout/Header'
@@ -11,10 +11,17 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { seoConfig, buildOgImageUrl, robotsDirectives } from '@/lib/seo'
 import '@/styles/globals.css'
 
-const montserrat = Montserrat({
+const inter = Inter({
   subsets: ['latin', 'latin-ext'],
   weight: ['300', '400', '500'],
   variable: '--font-sans',
+  display: 'swap',
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500'],
+  variable: '--font-heading',
   display: 'swap',
 })
 
@@ -63,7 +70,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   const { contact, social } = siteSettings
 
   return (
-    <html lang="pl" className={montserrat.variable}>
+    <html lang="pl" className={`${inter.variable} ${playfair.variable}`}>
       <body className="frontend antialiased">
         <JsonLd contact={contact} social={social} />
         <Header social={social} />
