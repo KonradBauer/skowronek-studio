@@ -1,5 +1,3 @@
-'use client'
-
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { AnimatedSection } from '@/components/animations/AnimatedSection'
@@ -17,7 +15,7 @@ export function VoucherSection({ data }: { data: VoucherData }) {
   const imageUrl = data.imageUrl || '/images/voucher.jpg'
 
   return (
-    <section id="voucher" className="relative overflow-hidden">
+    <section id="voucher" className="relative overflow-hidden scroll-mt-20">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
@@ -37,7 +35,7 @@ export function VoucherSection({ data }: { data: VoucherData }) {
             <p className="mb-4 text-sm uppercase tracking-[0.3em] text-accent">
               {data.label}
             </p>
-            <h2 className="mb-6 text-3xl font-light tracking-wide text-white md:text-4xl lg:text-5xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+            <h2 className="mb-6 text-3xl font-light tracking-wide md:text-4xl lg:text-5xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" style={{ color: '#ffffff' }}>
               {data.title}
             </h2>
             {data.description && (

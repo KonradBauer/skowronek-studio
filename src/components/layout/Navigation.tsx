@@ -4,11 +4,15 @@ import Link from 'next/link'
 import { useNavigationStore } from '@/stores/navigationStore'
 
 const NAV_ITEMS = [
-  { label: 'O nas', href: '#about' },
-  { label: 'Portfolio', href: '#portfolio' },
-  { label: 'Oferta', href: '#services' },
-  { label: 'Kontakt', href: '#contact' },
+  { label: 'O nas', sectionId: 'about' },
+  { label: 'Portfolio', sectionId: 'portfolio' },
+  { label: 'Oferta', sectionId: 'services' },
+  { label: 'Kontakt', sectionId: 'contact' },
 ]
+
+function scrollToSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 interface NavigationProps {
   className?: string
@@ -25,15 +29,14 @@ export function Navigation({ className = '', onItemClick, vertical = false, isOv
   return (
     <nav className={className}>
       <ul className={`flex ${vertical ? 'flex-col gap-6' : 'items-center gap-8'}`}>
-        {NAV_ITEMS.map(({ label, href }) => {
-          const sectionId = href.replace('#', '')
+        {NAV_ITEMS.map(({ label, sectionId }) => {
           const isActive = activeSection === sectionId
 
           return (
-            <li key={href}>
+            <li key={sectionId}>
               <a
-                href={href}
-                onClick={onItemClick}
+                href={`#${sectionId}`}
+                onClick={(e) => { e.preventDefault(); scrollToSection(sectionId); onItemClick?.() }}
                 className={`
                   inline-flex min-h-11 items-center text-sm uppercase tracking-[0.15em] transition-colors duration-[var(--duration-normal)] ${textShadow}
                   ${vertical ? 'text-2xl tracking-[0.2em] font-light' : ''}

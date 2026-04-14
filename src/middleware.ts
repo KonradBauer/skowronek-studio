@@ -36,6 +36,20 @@ export function middleware(request: NextRequest) {
     request.nextUrl.protocol === 'https:' ||
     request.headers.get('x-forwarded-proto') === 'https'
 
+  // Trailing slash normalization — /login/ → /login, /dashboard/ → /dashboard
+  if (pathname !== '/' && pathname.endsWith('/')) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname.slice(0, -1)
+    return NextResponse.redirect(url, { status: 308 })
+  }
+
+  // X-Robots-Tag: noindex for admin panel
+  if (pathname.startsWith('/admin')) {
+    const response = NextResponse.next()
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+    return response
+  }
+
   // Already logged in — skip login page, go straight to dashboard
   if (pathname === '/login') {
     const token = request.cookies.get('client-token')?.value
@@ -99,5 +113,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/login', '/dashboard/:path*', '/api/client/:path*', '/api/upload/:path*'],
+  matcher: [
+    '/login/:path*',
+    '/dashboard/:path*',
+    '/api/client/:path*',
+    '/api/upload/:path*',
+    '/admin/:path*',
+  ],
 }

@@ -136,6 +136,7 @@ src/
       client/           API klienta (download, preview, files, download-zip)
       clients/          Auth (login, logout, send-credentials)
       cron/             Cleanup wygaslych kont
+      og/               Dynamiczny OG image (ImageResponse, edge runtime)
       upload/           Chunked upload (init, chunk, complete, cleanup)
       contact-submissions/
       reviews/
@@ -144,11 +145,41 @@ src/
   globals/              HomePage, SiteSettings, EmailTemplates
   components/           admin, client, sections, layout, ui, seo, animations
   lib/                  auth, cleanup, email, s3, format, constants,
-                        file-utils, zip-generator, google-reviews
+                        file-utils, zip-generator, google-reviews,
+                        seo (seoConfig + helpers), schema (JSON-LD generators)
   hooks/                useScrollSpy
   stores/               navigationStore (Zustand)
   styles/               globals.css (Tailwind v4 theme)
 ```
+
+## SEO
+
+Centralny config: `src/lib/seo.ts` — `seoConfig`, `buildMetadata()`, `buildOgImageUrl()`, `robotsDirectives()`.
+Structured data: `src/lib/schema.ts` — `generateLocalBusinessSchema()`, `generateWebsiteSchema()`.
+
+### Gdzie co jest
+- `(frontend)/layout.tsx` — statyczny `metadata` (title template, OG, Twitter, robots)
+- `(frontend)/page.tsx` — `generateMetadata()` — nadpisuje tytul/opis z CMS (`SiteSettings.seo`)
+- `src/app/api/og/route.tsx` — dynamiczny OG image, `/api/og?title=...`
+- `src/components/seo/JsonLd.tsx` — JSON-LD schema.org (PhotographyBusiness + WebSite)
+- `src/app/sitemap.ts` — sitemap.xml (tylko root URL, bez hash-fragmentow)
+- `src/app/robots.ts` — robots.txt (disallow: /admin/, /api/, /login, /dashboard/)
+- `src/middleware.ts` — X-Robots-Tag noindex dla /admin/*, trailing slash redirect 308
+
+### Fonty
+`next/font/google`: Cormorant Garamond (headings) + Jost (body).
+CSS variables `--font-heading` i `--font-sans` nadpisuja Tailwind `@theme` przez wyzszospeyficznosc HTML.
+> Fonty do zatwierdzenia z klientem przed launchem.
+
+### Google Search Console
+Token weryfikacyjny wpisac w: Admin → Site Settings → SEO → "Google Search Console — token weryfikacyjny".
+Automatycznie wstrzykiwany jako `<meta name="google-site-verification">`.
+
+### Lokalne .env
+```env
+PAYLOAD_DB_PUSH=false   # wylacza schema push (zapobiega bledom "index already exists")
+```
+Przy dodaniu nowego pola do kolekcji: tymczasowo ustaw `PAYLOAD_DB_PUSH=true`, zrestartuj raz, z powrotem `false`.
 
 ## Env vars
 

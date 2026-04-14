@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { HeroSection } from '@/components/sections/HeroSection'
@@ -41,6 +42,29 @@ function getImageSize(image: unknown, size: string): string {
     return sizes?.[size]?.url || getImageUrl(image)
   }
   return getImageUrl(image)
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const payload = await getPayload({ config })
+    const siteSettings = await payload.findGlobal({ slug: 'site-settings' }) as {
+      siteName?: string
+      tagline?: string
+      seo?: { metaTitle?: string; metaDescription?: string; googleVerification?: string }
+    }
+    const { buildMetadata } = await import('@/lib/seo')
+    return {
+      ...buildMetadata({
+        title: siteSettings.seo?.metaTitle || siteSettings.siteName || undefined,
+        description: siteSettings.seo?.metaDescription || siteSettings.tagline || undefined,
+      }),
+      ...(siteSettings.seo?.googleVerification && {
+        verification: { google: siteSettings.seo.googleVerification },
+      }),
+    }
+  } catch {
+    return {}
+  }
 }
 
 export default async function HomePage() {

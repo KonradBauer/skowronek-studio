@@ -1,15 +1,8 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 import { SocialLinks } from './SocialLinks'
-
-const NAV_LINKS = [
-  { label: 'O nas', href: '#about' },
-  { label: 'Portfolio', href: '#portfolio' },
-  { label: 'Oferta', href: '#services' },
-  { label: 'Voucher', href: '#voucher' },
-  { label: 'Opinie', href: '#reviews' },
-  { label: 'Kontakt', href: '#contact' },
-]
+import { FooterNav } from './FooterNav'
 
 interface FooterProps {
   contact?: { email?: string; phone?: string; address?: string }
@@ -29,10 +22,14 @@ export function Footer({ contact, social }: FooterProps) {
         <div className="grid gap-10 py-14 md:grid-cols-3 lg:grid-cols-4">
           {/* Logo + opis */}
           <div className="lg:col-span-1">
-            <Link href="/" className="block">
-              <span className="text-lg font-light uppercase tracking-[0.25em] text-dark">
-                Foto Studio
-              </span>
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="Skowronek Studio"
+                width={180}
+                height={66}
+                className="h-20 w-auto object-contain"
+              />
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-body-muted">
               Profesjonalne studio fotograficzne. Uchwycamy chwile, ktore zostaja na zawsze.
@@ -44,26 +41,7 @@ export function Footer({ contact, social }: FooterProps) {
             <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-dark">
               Nawigacja
             </h3>
-            <ul className="space-y-0">
-              {NAV_LINKS.map(({ label, href }) => (
-                <li key={href}>
-                  <a
-                    href={href}
-                    className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
-                  >
-                    {label}
-                  </a>
-                </li>
-              ))}
-              <li>
-                <Link
-                  href="/login"
-                  className="inline-flex min-h-11 items-center text-sm text-body-muted transition-colors hover:text-primary"
-                >
-                  Panel klienta
-                </Link>
-              </li>
-            </ul>
+            <FooterNav />
           </nav>
 
           {/* Kontakt */}
@@ -103,10 +81,24 @@ export function Footer({ contact, social }: FooterProps) {
 
         {/* Bottom bar */}
         <div className="border-t border-warm-gray py-6">
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             <p className="text-center text-xs text-body-muted">
-              &copy; {currentYear} Foto Studio. Wszelkie prawa zastrzezone.
+              &copy; {currentYear} Skowronek Studio. Wszelkie prawa zastrzezone.
             </p>
+            <div className="flex items-center gap-4 text-xs text-body-muted/60">
+              <Link href="/polityka-prywatnosci" className="transition-colors hover:text-primary">
+                Polityka prywatności
+              </Link>
+              <span>·</span>
+              <a
+                href="https://kbauer.pl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-primary"
+              >
+                Powered by kbauer.pl
+              </a>
+            </div>
           </div>
         </div>
       </Container>
