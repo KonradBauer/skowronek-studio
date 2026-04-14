@@ -85,7 +85,7 @@ export default function PolitykaPrywatnosci() {
               <ul className="list-disc space-y-1 pl-5">
                 <li>dostępu do swoich danych,</li>
                 <li>sprostowania danych,</li>
-                <li>usunięcia danych („prawo do bycia zapomnianym"),</li>
+                <li>usunięcia danych (&bdquo;prawo do bycia zapomnianym&rdquo;),</li>
                 <li>ograniczenia przetwarzania,</li>
                 <li>przenoszenia danych,</li>
                 <li>wniesienia sprzeciwu wobec przetwarzania,</li>
