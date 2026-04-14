@@ -1,11 +1,10 @@
 import type { MetadataRoute } from 'next'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://skowronekstudio.pl'
+import { seoConfig } from '@/lib/seo'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: BASE_URL,
+      url: seoConfig.siteUrl,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,

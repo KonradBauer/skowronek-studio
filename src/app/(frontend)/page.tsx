@@ -50,13 +50,17 @@ export async function generateMetadata(): Promise<Metadata> {
     const siteSettings = await payload.findGlobal({ slug: 'site-settings' }) as {
       siteName?: string
       tagline?: string
-      seo?: { metaTitle?: string; metaDescription?: string }
+      seo?: { metaTitle?: string; metaDescription?: string; googleVerification?: string }
     }
-    const title = siteSettings.seo?.metaTitle || siteSettings.siteName
-    const description = siteSettings.seo?.metaDescription || siteSettings.tagline
+    const { buildMetadata } = await import('@/lib/seo')
     return {
-      ...(title && { title }),
-      ...(description && { description }),
+      ...buildMetadata({
+        title: siteSettings.seo?.metaTitle || siteSettings.siteName || undefined,
+        description: siteSettings.seo?.metaDescription || siteSettings.tagline || undefined,
+      }),
+      ...(siteSettings.seo?.googleVerification && {
+        verification: { google: siteSettings.seo.googleVerification },
+      }),
     }
   } catch {
     return {}

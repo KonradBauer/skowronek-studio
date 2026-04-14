@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Cormorant_Garamond, Jost } from 'next/font/google'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { Header } from '@/components/layout/Header'
@@ -7,85 +8,70 @@ import { StripeTransition } from '@/components/animations/StripeTransition'
 import { ScrollToTop } from '@/components/ui/ScrollToTop'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { JsonLd } from '@/components/seo/JsonLd'
+import { seoConfig, buildOgImageUrl, robotsDirectives } from '@/lib/seo'
 import '@/styles/globals.css'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://skowronekstudio.pl'
+// Fonts — confirm final choices with client before launch
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['300', '400', '500'],
+  variable: '--font-heading',
+  display: 'swap',
+})
+
+const jost = Jost({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['300', '400', '500'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(seoConfig.siteUrl),
   title: {
-    default: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
-    template: '%s | Skowronek Studio',
+    default: seoConfig.defaultTitle,
+    template: seoConfig.titleTemplate,
   },
-  description:
-    'Profesjonalne studio fotograficzne specjalizujące się w fotografii ślubnej, portretowej i rodzinnej. Uchwycamy chwile, które zostają na zawsze. Częstochowa i okolice.',
-  keywords: [
-    'fotograf ślubny',
-    'fotografia ślubna',
-    'fotograf Częstochowa',
-    'studio fotograficzne',
-    'fotografia portretowa',
-    'fotografia rodzinna',
-    'sesja zdjęciowa',
-    'film ślubny',
-    'Skowronek Studio',
-    'fotograf wesele',
-  ],
-  authors: [{ name: 'Skowronek Studio' }],
-  creator: 'Skowronek Studio',
+  description: seoConfig.defaultDescription,
+  keywords: [...seoConfig.keywords],
+  authors: [{ name: seoConfig.siteName }],
+  creator: seoConfig.siteName,
   openGraph: {
-    title: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
-    description:
-      'Profesjonalne studio fotograficzne. Fotografia ślubna, portretowa, rodzinna i filmowanie. Częstochowa i okolice.',
-    url: SITE_URL,
-    siteName: 'Skowronek Studio',
+    title: seoConfig.defaultTitle,
+    description: seoConfig.defaultDescription,
+    url: seoConfig.siteUrl,
+    siteName: seoConfig.siteName,
     locale: 'pl_PL',
     type: 'website',
-    images: [
-      {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Skowronek Studio - Fotografia z pasją',
-      },
-    ],
+    images: [{ url: buildOgImageUrl(), width: 1200, height: 630, alt: seoConfig.defaultTitle }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Skowronek Studio - Fotografia ślubna, portretowa i rodzinna',
-    description:
-      'Profesjonalne studio fotograficzne. Fotografia slubna, portretowa, rodzinna i filmowanie.',
-    images: ['/og-image.jpg'],
+    title: seoConfig.defaultTitle,
+    description: seoConfig.defaultDescription,
+    images: [buildOgImageUrl()],
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+  alternates: { canonical: seoConfig.siteUrl },
+  robots: robotsDirectives(),
+}
+
+type SiteSettings = {
+  contact?: { email?: string; phone?: string; address?: string }
+  social?: { facebook?: string; instagram?: string; tiktok?: string }
+  seo?: { metaTitle?: string; metaDescription?: string; googleVerification?: string }
 }
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let siteSettings: any = {}
+  let siteSettings: SiteSettings = {}
   try {
     const payload = await getPayload({ config })
-    siteSettings = await payload.findGlobal({ slug: 'site-settings' })
+    siteSettings = await payload.findGlobal({ slug: 'site-settings' }) as SiteSettings
   } catch {}
 
-  const contact = siteSettings.contact as { email?: string; phone?: string; address?: string } | undefined
-  const social = siteSettings.social as { facebook?: string; instagram?: string; tiktok?: string } | undefined
+  const { contact, social } = siteSettings
 
   return (
-    <html lang="pl">
+    <html lang="pl" className={`${cormorant.variable} ${jost.variable}`}>
       <body className="frontend antialiased">
         <JsonLd contact={contact} social={social} />
         <Header social={social} />

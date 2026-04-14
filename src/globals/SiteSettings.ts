@@ -47,6 +47,7 @@ export const SiteSettings: GlobalConfig = {
       fields: [
         { name: 'metaTitle', type: 'text', label: 'Meta tytuł' },
         { name: 'metaDescription', type: 'textarea', label: 'Meta opis' },
+        { name: 'googleVerification', type: 'text', label: 'Google Search Console — token weryfikacyjny' },
       ],
     },
   ],

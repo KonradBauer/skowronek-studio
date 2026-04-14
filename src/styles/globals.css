@@ -14,8 +14,8 @@
   --color-input-border: #958D84;
 
   /* Font stack - tymczasowy, docelowy od klienta */
-  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-  --font-heading: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Jost", "Segoe UI", Arial, sans-serif;
+  --font-heading: "Cormorant Garamond", Georgia, serif;
 
   /* Spacing scale */
   --spacing-section: 6rem;
