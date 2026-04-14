@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   // Fetch email template
   const templates = await payload.findGlobal({ slug: 'email-templates', overrideAccess: true })
 
-  const subject = (templates?.clientCredentials?.subject as string) || 'Twoje zdjęcia są gotowe - Skowronek Studio'
+  const subject = (templates?.clientCredentials?.subject as string) || 'Twoje zdjęcia są gotowe - Foto Studio'
   const body =
     (templates?.clientCredentials?.body as string) ||
     `<p>Cześć {{clientName}}, Twój login: {{email}}, hasło: {{password}}</p>`

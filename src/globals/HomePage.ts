@@ -37,7 +37,7 @@ export const HomePage: GlobalConfig = {
       label: 'Hero',
       fields: [
         mediaFieldMany('Zdjęcia hero (max 6)', 6),
-        { name: 'title', type: 'text', defaultValue: 'Skowronek Studio', label: 'Tytuł' },
+        { name: 'title', type: 'text', defaultValue: 'Foto Studio', label: 'Tytuł' },
         { name: 'subtitle', type: 'text', defaultValue: 'Fotografia z pasją', label: 'Podtytuł' },
         { name: 'ctaText', type: 'text', defaultValue: 'Zobacz portfolio', label: 'Tekst CTA' },
         { name: 'ctaLink', type: 'text', defaultValue: '#portfolio', label: 'Link CTA' },

@@ -11,7 +11,7 @@ export const SiteSettings: GlobalConfig = {
     {
       name: 'siteName',
       type: 'text',
-      defaultValue: 'Skowronek Studio',
+      defaultValue: 'Foto Studio',
       label: 'Nazwa studia',
     },
     {

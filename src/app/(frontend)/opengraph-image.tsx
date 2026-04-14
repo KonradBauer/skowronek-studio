@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
 
-export const alt = 'Skowronek Studio - Fotografia slubna, portretowa i rodzinna'
+export const alt = 'Foto Studio - Fotografia slubna, portretowa i rodzinna'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -111,7 +111,7 @@ export default function OgImage() {
               lineHeight: 1,
             }}
           >
-            Skowronek Studio
+            Foto Studio
           </div>
 
           {/* Divider */}

@@ -6,7 +6,7 @@ export interface GoogleReview {
   profilePhoto?: string
 }
 
-// Place ID for Skowronek Studio
+// Place ID for Foto Studio
 const PLACE_ID = 'ChIJnTza-aG3EEcR47DSM1UaGew'
 
 // Fallback reviews if API fails

@@ -69,7 +69,7 @@ export default async function HomePage() {
     .filter(Boolean)
   const heroData = {
     images: heroImages.length > 0 ? heroImages : ['/images/hero-1.jpg', '/images/hero-2.jpg', '/images/hero-3.jpg', '/images/hero-4.jpg'],
-    title: homePage.hero?.title || 'Skowronek Studio',
+    title: homePage.hero?.title || 'Foto Studio',
     subtitle: homePage.hero?.subtitle || 'Fotografia z pasja',
     ctaText: homePage.hero?.ctaText || 'Zobacz portfolio',
     ctaLink: homePage.hero?.ctaLink || '#portfolio',

@@ -10,7 +10,7 @@ const defaultCredentialsTemplate = `<!DOCTYPE html>
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="text-align:center;margin-bottom:32px;">
       <h1 style="font-size:24px;font-weight:300;color:#1a1a1a;letter-spacing:0.05em;margin:0;">
-        Skowronek Studio
+        Foto Studio
       </h1>
     </div>
 
@@ -49,7 +49,7 @@ const defaultCredentialsTemplate = `<!DOCTYPE html>
 
     <div style="text-align:center;margin-top:32px;">
       <p style="font-size:13px;color:#aaa;margin:0;">
-        Skowronek Studio - Fotografia z pasją
+        Foto Studio - Fotografia z pasją
       </p>
     </div>
   </div>
@@ -98,7 +98,7 @@ export const EmailTemplates: GlobalConfig = {
           name: 'subject',
           type: 'text',
           label: 'Temat',
-          defaultValue: 'Twoje zdjęcia są gotowe - Skowronek Studio',
+          defaultValue: 'Twoje zdjęcia są gotowe - Foto Studio',
         },
         {
           name: 'body',
