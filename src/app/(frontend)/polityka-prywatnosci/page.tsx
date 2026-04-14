@@ -39,13 +39,13 @@ export default function PolitykaPrywatnosci() {
               </h2>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  <strong>Formularz kontaktowy</strong> — imię i nazwisko, adres e-mail, numer telefonu, treść wiadomości.
+                  <strong>Formularz kontaktowy</strong>: imię i nazwisko, adres e-mail, numer telefonu, treść wiadomości.
                 </li>
                 <li>
-                  <strong>Panel klienta</strong> — adres e-mail i hasło (do logowania), pliki (zdjęcia i filmy) udostępnione przez studio.
+                  <strong>Panel klienta</strong>: adres e-mail i hasło (do logowania), pliki (zdjęcia i filmy) udostępnione przez studio.
                 </li>
                 <li>
-                  <strong>Pliki cookies</strong> — wyłącznie niezbędne technicznie (token sesji panelu klienta). Nie stosujemy cookies śledzących ani marketingowych.
+                  <strong>Pliki cookies</strong>: wyłącznie niezbędne technicznie (token sesji panelu klienta). Nie stosujemy cookies śledzących ani marketingowych.
                 </li>
               </ul>
             </section>
@@ -56,13 +56,13 @@ export default function PolitykaPrywatnosci() {
               </h2>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  Odpowiedź na zapytanie przez formularz kontaktowy — art. 6 ust. 1 lit. b RODO (wykonanie umowy lub podjęcie działań przed jej zawarciem).
+                  Odpowiedź na zapytanie przez formularz kontaktowy: art. 6 ust. 1 lit. b RODO (wykonanie umowy lub podjęcie działań przed jej zawarciem).
                 </li>
                 <li>
-                  Prowadzenie panelu klienta i udostępnianie plików — art. 6 ust. 1 lit. b RODO.
+                  Prowadzenie panelu klienta i udostępnianie plików: art. 6 ust. 1 lit. b RODO.
                 </li>
                 <li>
-                  Utrzymanie sesji logowania (cookies) — art. 6 ust. 1 lit. f RODO (uzasadniony interes administratora).
+                  Utrzymanie sesji logowania (cookies): art. 6 ust. 1 lit. f RODO (uzasadniony interes administratora).
                 </li>
               </ul>
             </section>
@@ -72,8 +72,8 @@ export default function PolitykaPrywatnosci() {
                 4. Okres przechowywania
               </h2>
               <ul className="list-disc space-y-2 pl-5">
-                <li>Dane z formularza kontaktowego — do 12 miesięcy od ostatniego kontaktu.</li>
-                <li>Dane panelu klienta — do daty wygaśnięcia konta ustalonej ze studiem, następnie automatyczne usunięcie.</li>
+                <li>Dane z formularza kontaktowego: do 12 miesięcy od ostatniego kontaktu.</li>
+                <li>Dane panelu klienta: do daty wygaśnięcia konta ustalonej ze studiem, następnie automatyczne usunięcie.</li>
               </ul>
             </section>
 

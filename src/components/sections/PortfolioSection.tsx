@@ -19,9 +19,9 @@ interface PortfolioData {
 const FALLBACK_ITEMS: PortfolioItem[] = [
   { id: 1, title: 'Wesele Anny i Marka', category: 'Wesela', image: '/images/portfolio-1.jpg' },
   { id: 2, title: 'Sesja portretowa', category: 'Portrety', image: '/images/portfolio-2.jpg' },
-  { id: 3, title: 'Slub w plenerze', category: 'Wesela', image: '/images/portfolio-3.jpg' },
+  { id: 3, title: 'Ślub w plenerze', category: 'Wesela', image: '/images/portfolio-3.jpg' },
   { id: 4, title: 'Wesele nad morzem', category: 'Wesela', image: '/images/portfolio-4.jpg' },
-  { id: 5, title: 'Sesja narzeczenska', category: 'Portrety', image: '/images/portfolio-5.jpg' },
+  { id: 5, title: 'Sesja narzeczeńska', category: 'Portrety', image: '/images/portfolio-5.jpg' },
   { id: 6, title: 'Sesja rodzinna', category: 'Rodzinne', image: '/images/portfolio-6.jpg' },
 ]
 

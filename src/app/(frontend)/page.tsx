@@ -94,7 +94,7 @@ export default async function HomePage() {
   const heroData = {
     images: heroImages.length > 0 ? heroImages : ['/images/hero-1.jpg', '/images/hero-2.jpg', '/images/hero-3.jpg', '/images/hero-4.jpg'],
     title: homePage.hero?.title || 'Skowronek Studio',
-    subtitle: homePage.hero?.subtitle || 'Fotografia z pasja',
+    subtitle: homePage.hero?.subtitle || 'Fotografia z pasją',
     ctaText: homePage.hero?.ctaText || 'Zobacz portfolio',
     ctaLink: homePage.hero?.ctaLink || '#portfolio',
   }
@@ -102,7 +102,7 @@ export default async function HomePage() {
   // About data
   const aboutData = {
     title: homePage.about?.title || 'O nas',
-    heading: homePage.about?.heading || 'Chwile, ktore zostaja na zawsze',
+    heading: homePage.about?.heading || 'Chwile, które zostają na zawsze',
     paragraphs: (homePage.about?.paragraphs || []).map((p) => p.text as string),
     imageUrl: getImageUrl(homePage.about?.image),
   }
@@ -135,9 +135,9 @@ export default async function HomePage() {
   // Voucher data
   const voucherData = {
     label: homePage.voucher?.label || 'Bon podarunkowy',
-    title: homePage.voucher?.title || 'Podaruj wyjatkowe chwile',
+    title: homePage.voucher?.title || 'Podaruj wyjątkowe chwile',
     description: homePage.voucher?.description || '',
-    ctaText: homePage.voucher?.ctaText || 'Zamow voucher',
+    ctaText: homePage.voucher?.ctaText || 'Zamów voucher',
     ctaLink: homePage.voucher?.ctaLink || '#contact',
     imageUrl: getImageUrl(homePage.voucher?.image),
   }
