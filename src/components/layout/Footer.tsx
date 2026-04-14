@@ -81,12 +81,15 @@ export function Footer({ contact, social }: FooterProps) {
 
         {/* Bottom bar */}
         <div className="border-t border-warm-gray py-6">
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             <p className="text-center text-xs text-body-muted">
               &copy; {currentYear} Skowronek Studio. Wszelkie prawa zastrzezone.
             </p>
-            <p className="text-center text-xs text-body-muted/60">
-              Powered by{' '}
+            <div className="flex items-center gap-4 text-xs text-body-muted/60">
+              <Link href="/polityka-prywatnosci" className="transition-colors hover:text-primary">
+                Polityka prywatności
+              </Link>
+              <span>·</span>
               <a
                 href="https://kbauer.pl"
                 target="_blank"
@@ -95,7 +98,7 @@ export function Footer({ contact, social }: FooterProps) {
               >
                 kbauer.pl
               </a>
-            </p>
+            </div>
           </div>
         </div>
       </Container>

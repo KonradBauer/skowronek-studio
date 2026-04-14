@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false)
@@ -28,7 +29,10 @@ export function CookieConsent() {
         <p className="flex-1 text-sm leading-relaxed text-cream/90">
           Ta strona wykorzystuje pliki cookies niezbędne do działania panelu klienta
           (logowanie i&nbsp;autoryzacja). Nie stosujemy cookies śledzących ani
-          marketingowych.
+          marketingowych.{' '}
+          <Link href="/polityka-prywatnosci" className="underline underline-offset-2 hover:text-white">
+            Polityka prywatności
+          </Link>
         </p>
         <div className="flex shrink-0 gap-3">
           <button
