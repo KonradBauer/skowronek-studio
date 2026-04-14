@@ -12,7 +12,7 @@ export function Section({ children, id, className = '', alternate = false }: Sec
   return (
     <section
       id={id}
-      className={`py-section-sm md:py-section ${alternate ? 'bg-cream' : 'bg-white'} ${className}`}
+      className={`scroll-mt-20 py-section-sm md:py-section ${alternate ? 'bg-cream' : 'bg-white'} ${className}`}
     >
       <Container>{children}</Container>
     </section>

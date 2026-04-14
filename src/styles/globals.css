@@ -33,6 +33,10 @@ html:has(.frontend) body {
   overflow-x: clip;
 }
 
+html:has(.frontend) {
+  scroll-behavior: smooth;
+}
+
 /* Base styles - scoped to .frontend to avoid leaking into Payload admin */
 .frontend {
   scroll-behavior: smooth;

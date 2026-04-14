@@ -15,7 +15,7 @@ export function VoucherSection({ data }: { data: VoucherData }) {
   const imageUrl = data.imageUrl || '/images/voucher.jpg'
 
   return (
-    <section id="voucher" className="relative overflow-hidden">
+    <section id="voucher" className="relative overflow-hidden scroll-mt-20">
       {/* Background image */}
       <div className="absolute inset-0">
         <Image
