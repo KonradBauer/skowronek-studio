@@ -35,7 +35,7 @@ export function VoucherSection({ data }: { data: VoucherData }) {
             <p className="mb-4 text-sm uppercase tracking-[0.3em] text-accent">
               {data.label}
             </p>
-            <h2 className="mb-6 text-3xl font-light tracking-wide text-white md:text-4xl lg:text-5xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+            <h2 className="mb-6 text-3xl font-light tracking-wide md:text-4xl lg:text-5xl bg-gradient-to-r from-white via-white/90 to-accent bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
               {data.title}
             </h2>
             {data.description && (
